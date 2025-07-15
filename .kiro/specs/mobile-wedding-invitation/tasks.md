@@ -35,7 +35,7 @@
     - _요구사항: 요구사항 6.1_
 
 - [ ] 4. Supabase Auth 인증 시스템 구현
-  - [ ] 4.1 Supabase Auth 설정
+  - [x] 4.1 Supabase Auth 설정
     - Supabase Auth 설정 및 소셜 로그인 프로바이더 연동 (카카오, 구글)
     - 인증 미들웨어 및 세션 관리 구현
     - 사용자 프로필 관리 기능 구현

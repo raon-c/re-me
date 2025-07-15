@@ -1,68 +1,238 @@
+import { createClient } from './server';
 import { createClient as createBrowserClient } from './client';
-import { createClient as createServerClient } from './server';
-import { Database } from '@/types/database';
+import type { User } from '@supabase/supabase-js';
 
-export type SupabaseClient = ReturnType<typeof createBrowserClient>;
-export type SupabaseServerClient = Awaited<
-  ReturnType<typeof createServerClient>
->;
+// AIDEV-NOTE: Authentication utilities for server and client-side operations
 
-// Type-safe table references
-export type Tables<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Row'];
-export type TablesInsert<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Insert'];
-export type TablesUpdate<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Update'];
+/**
+ * Get the current user from server-side
+ */
+export async function getCurrentUser(): Promise<User | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+}
 
-// Specific table types for easier use
-export type User = Tables<'users'>;
-export type Invitation = Tables<'invitations'>;
-export type RSVPResponse = Tables<'rsvp_responses'>;
-export type InvitationView = Tables<'invitation_views'>;
-export type Template = Tables<'templates'>;
+/**
+ * Get the current session from server-side
+ */
+export async function getCurrentSession() {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session;
+}
 
-// Insert types
-export type UserInsert = TablesInsert<'users'>;
-export type InvitationInsert = TablesInsert<'invitations'>;
-export type RSVPResponseInsert = TablesInsert<'rsvp_responses'>;
-export type InvitationViewInsert = TablesInsert<'invitation_views'>;
-export type TemplateInsert = TablesInsert<'templates'>;
+/**
+ * Check if user is authenticated (server-side)
+ */
+export async function isAuthenticated(): Promise<boolean> {
+  const user = await getCurrentUser();
+  return !!user;
+}
 
-// Update types
-export type UserUpdate = TablesUpdate<'users'>;
-export type InvitationUpdate = TablesUpdate<'invitations'>;
-export type RSVPResponseUpdate = TablesUpdate<'rsvp_responses'>;
-export type InvitationViewUpdate = TablesUpdate<'invitation_views'>;
-export type TemplateUpdate = TablesUpdate<'templates'>;
+/**
+ * Get user profile data with additional metadata
+ */
+export async function getUserProfile(userId: string) {
+  const supabase = await createClient();
 
-// Helper function to generate unique invitation codes
-export function generateInvitationCode(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching user profile:', error);
+    return null;
   }
-  return result;
+
+  return data;
 }
 
-// Helper function to validate email
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-// Helper function to format date for database
-export function formatDateForDB(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
-
-// Helper function to format time for database
-export function formatTimeForDB(time: string): string {
-  // Ensure time is in HH:MM format
-  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-  if (!timeRegex.test(time)) {
-    throw new Error('Invalid time format. Expected HH:MM');
+/**
+ * Update user profile
+ */
+export async function updateUserProfile(
+  userId: string,
+  updates: {
+    name?: string;
+    email?: string;
   }
-  return time;
+) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('users')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating user profile:', error);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
 }
+
+/**
+ * Create or update user profile after OAuth sign-in
+ * AIDEV-NOTE: Handles both social login and email signup profile creation
+ */
+export async function upsertUserProfile(user: User) {
+  const supabase = await createClient();
+
+  const userData = {
+    id: user.id,
+    email: user.email!,
+    name:
+      user.user_metadata?.name ||
+      user.user_metadata?.full_name ||
+      user.email!.split('@')[0],
+    provider: user.app_metadata?.provider || 'email',
+    provider_id: user.user_metadata?.provider_id || null,
+    email_verified: user.email_confirmed_at ? true : false,
+  };
+
+  const { data, error } = await supabase
+    .from('users')
+    .upsert(userData, {
+      onConflict: 'id',
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error upserting user profile:', error);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
+}
+
+/**
+ * Delete user account and all associated data
+ */
+export async function deleteUserAccount(userId: string) {
+  const supabase = await createClient();
+
+  // Delete user profile (cascading deletes will handle invitations, etc.)
+  const { error: profileError } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', userId);
+
+  if (profileError) {
+    console.error('Error deleting user profile:', profileError);
+    return { error: profileError };
+  }
+
+  // Delete auth user
+  const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+
+  if (authError) {
+    console.error('Error deleting auth user:', authError);
+    return { error: authError };
+  }
+
+  return { error: null };
+}
+
+/**
+ * Client-side authentication utilities
+ * AIDEV-NOTE: Centralized auth methods for consistent error handling and Korean UX
+ */
+export const clientAuth = {
+  /**
+   * Sign in with email and password
+   */
+  async signInWithPassword(email: string, password: string) {
+    const supabase = createBrowserClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { data, error };
+  },
+
+  /**
+   * Sign up with email and password
+   */
+  async signUp(email: string, password: string, name: string) {
+    const supabase = createBrowserClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+        },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      },
+    });
+    return { data, error };
+  },
+
+  /**
+   * Sign in with OAuth provider
+   */
+  async signInWithOAuth(provider: 'google' | 'kakao') {
+    const supabase = createBrowserClient();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      },
+    });
+    return { data, error };
+  },
+
+  /**
+   * Sign out
+   */
+  async signOut() {
+    const supabase = createBrowserClient();
+    const { error } = await supabase.auth.signOut();
+    return { error };
+  },
+
+  /**
+   * Reset password
+   */
+  async resetPassword(email: string) {
+    const supabase = createBrowserClient();
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+    });
+    return { data, error };
+  },
+
+  /**
+   * Update password
+   */
+  async updatePassword(password: string) {
+    const supabase = createBrowserClient();
+    const { data, error } = await supabase.auth.updateUser({
+      password,
+    });
+    return { data, error };
+  },
+
+  /**
+   * Update user metadata
+   */
+  async updateUser(updates: { email?: string; data?: Record<string, unknown> }) {
+    const supabase = createBrowserClient();
+    const { data, error } = await supabase.auth.updateUser(updates);
+    return { data, error };
+  },
+};

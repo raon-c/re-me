@@ -29,41 +29,52 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Do not run code between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
   // IMPORTANT: DO NOT REMOVE auth.getUser()
+  // AIDEV-NOTE: This call is required for proper session management
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/signup') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/invitation/') &&
-    request.nextUrl.pathname.startsWith('/dashboard')
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  const { pathname } = request.nextUrl;
+
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    '/',
+    '/login',
+    '/signup',
+    '/auth/callback',
+    '/auth/reset-password',
+  ];
+
+  // Define routes that require authentication
+  const protectedRoutes = ['/dashboard', '/invitation/create', '/profile'];
+
+  // Check if current path is a public invitation view (e.g., /invitation/abc12345)
+  // AIDEV-NOTE: 8-character invitation codes for public sharing
+  const isPublicInvitation = /^\/invitation\/[a-zA-Z0-9]{8}$/.test(pathname);
+
+  // Allow access to public routes and public invitation views
+  if (publicRoutes.includes(pathname) || isPublicInvitation) {
+    return supabaseResponse;
+  }
+
+  // Redirect unauthenticated users trying to access protected routes
+  if (!user && protectedRoutes.some((route) => pathname.startsWith(route))) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
+    url.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(url);
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is.
-  // If you're creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
+  // Redirect authenticated users away from auth pages
+  if (user && ['/login', '/signup'].includes(pathname)) {
+    const redirectTo =
+      request.nextUrl.searchParams.get('redirectTo') || '/dashboard';
+    const url = request.nextUrl.clone();
+    url.pathname = redirectTo;
+    url.searchParams.delete('redirectTo');
+    return NextResponse.redirect(url);
+  }
 
   return supabaseResponse;
 }
@@ -75,8 +86,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
+     * - api routes (handled separately)
+     * - static assets
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
