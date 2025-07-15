@@ -8,7 +8,7 @@
   - 환경 변수 설정 (.env.local, .env.example)
   - _요구사항: 요구사항 6.1, 6.4_
 
-- [ ] 2. Supabase 설정 및 데이터베이스 구축
+- [x] 2. Supabase 설정 및 데이터베이스 구축
   - [x] 2.1 Supabase 프로젝트 설정
     - Supabase 프로젝트 생성 및 환경 변수 설정
     - Supabase 클라이언트 설정 (lib/supabase.ts)
