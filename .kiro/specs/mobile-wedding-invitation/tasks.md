@@ -21,14 +21,14 @@
     - 초기 템플릿 데이터 시드 작성
     - _요구사항: 요구사항 1.1, 7.1_
 
-- [ ] 3. tRPC 설정 및 기본 API 구조 구축
-  - [ ] 3.1 tRPC 서버 설정
+- [x] 3. tRPC 설정 및 기본 API 구조 구축
+  - [x] 3.1 tRPC 서버 설정
     - tRPC 서버 설정 (server/api/trpc.ts)
     - 루트 라우터 생성 (server/api/root.ts)
     - Next.js API 핸들러 설정 (app/api/trpc/[trpc]/route.ts)
     - _요구사항: 요구사항 6.1_
 
-  - [ ] 3.2 tRPC 클라이언트 설정
+  - [x] 3.2 tRPC 클라이언트 설정
     - tRPC 클라이언트 설정 (lib/trpc.ts)
     - TanStack Query와 tRPC 통합 설정
     - 타입 안전한 API 호출 환경 구축
