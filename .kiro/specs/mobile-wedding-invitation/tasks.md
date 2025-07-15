@@ -15,7 +15,7 @@
     - Row Level Security (RLS) 정책 설정
     - _요구사항: 요구사항 8.1, 8.2_
 
-  - [ ] 2.2 데이터베이스 스키마 구현
+  - [x] 2.2 데이터베이스 스키마 구현
     - Supabase에서 테이블 생성 (users, invitations, rsvp_responses, invitation_views, templates)
     - Prisma 스키마 파일 작성 (Supabase 연동)
     - 초기 템플릿 데이터 시드 작성

@@ -62,6 +62,14 @@ INSERT INTO public.templates (id, name, category, preview_image_url, css_styles,
 
 ('minimal-03', 'Soft Gray', 'minimal', '/templates/minimal-03-preview.jpg',
  '{"primaryColor": "#708090", "secondaryColor": "#D3D3D3", "fontFamily": "sans-serif", "backgroundColor": "#F8F8FF"}',
- '<div class="invitation-container minimal-gray"><h1>{{groomName}} & {{brideName}}</h1><p class="date">{{weddingDate}}</p><p class="venue">{{venueName}}</p><p class="address">{{venueAddress}}</p><div class="message">{{customMessage}}</div></div>')
+ '<div class="invitation-container minimal-gray"><h1>{{groomName}} & {{brideName}}</h1><p class="date">{{weddingDate}}</p><p class="venue">{{venueName}}</p><p class="address">{{venueAddress}}</p><div class="message">{{customMessage}}</div></div>'),
+
+('minimal-04', 'Clean Lines', 'minimal', '/templates/minimal-04-preview.jpg',
+ '{"primaryColor": "#2F4F4F", "secondaryColor": "#F5F5F5", "fontFamily": "sans-serif", "backgroundColor": "#FFFFFF"}',
+ '<div class="invitation-container minimal-clean"><h1>{{groomName}} & {{brideName}}</h1><p class="date">{{weddingDate}}</p><p class="venue">{{venueName}}</p><p class="address">{{venueAddress}}</p><div class="message">{{customMessage}}</div></div>'),
+
+('classic-05', 'Burgundy Elegance', 'classic', '/templates/classic-05-preview.jpg',
+ '{"primaryColor": "#800020", "secondaryColor": "#F5F5DC", "fontFamily": "serif", "backgroundColor": "#FDF5E6"}',
+ '<div class="invitation-container burgundy-theme"><h1>{{groomName}} & {{brideName}}</h1><p class="date">{{weddingDate}}</p><p class="venue">{{venueName}}</p><p class="address">{{venueAddress}}</p><div class="message">{{customMessage}}</div></div>')
 
 ON CONFLICT (id) DO NOTHING;

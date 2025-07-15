@@ -234,3 +234,7 @@ playwright/.cache/
 .out
 .storybook-out
 storybook-static
+
+.env
+.env.local
+/generated/prisma
