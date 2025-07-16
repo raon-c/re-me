@@ -12,7 +12,7 @@ async function main() {
       id: 'classic-01',
       name: 'Classic Elegance',
       category: 'classic' as const,
-      previewImageUrl: '/templates/classic-01-preview.jpg',
+      previewImageUrl: '/templates/classic-01-preview.svg',
       cssStyles: {
         primaryColor: '#8B4513',
         secondaryColor: '#F5F5DC',
@@ -26,7 +26,7 @@ async function main() {
       id: 'classic-02',
       name: 'Traditional Gold',
       category: 'classic' as const,
-      previewImageUrl: '/templates/classic-02-preview.jpg',
+      previewImageUrl: '/templates/classic-02-preview.svg',
       cssStyles: {
         primaryColor: '#FFD700',
         secondaryColor: '#8B0000',
@@ -40,7 +40,7 @@ async function main() {
       id: 'classic-03',
       name: 'Vintage Rose',
       category: 'classic' as const,
-      previewImageUrl: '/templates/classic-03-preview.jpg',
+      previewImageUrl: '/templates/classic-03-preview.svg',
       cssStyles: {
         primaryColor: '#CD5C5C',
         secondaryColor: '#F0E68C',
@@ -54,7 +54,7 @@ async function main() {
       id: 'classic-04',
       name: 'Royal Blue',
       category: 'classic' as const,
-      previewImageUrl: '/templates/classic-04-preview.jpg',
+      previewImageUrl: '/templates/classic-04-preview.svg',
       cssStyles: {
         primaryColor: '#4169E1',
         secondaryColor: '#F0F8FF',
@@ -68,7 +68,7 @@ async function main() {
       id: 'classic-05',
       name: 'Burgundy Elegance',
       category: 'classic' as const,
-      previewImageUrl: '/templates/classic-05-preview.jpg',
+      previewImageUrl: '/templates/classic-05-preview.svg',
       cssStyles: {
         primaryColor: '#800020',
         secondaryColor: '#F5F5DC',
@@ -84,7 +84,7 @@ async function main() {
       id: 'modern-01',
       name: 'Minimalist White',
       category: 'modern' as const,
-      previewImageUrl: '/templates/modern-01-preview.jpg',
+      previewImageUrl: '/templates/modern-01-preview.svg',
       cssStyles: {
         primaryColor: '#000000',
         secondaryColor: '#808080',
@@ -98,7 +98,7 @@ async function main() {
       id: 'modern-02',
       name: 'Geometric Pattern',
       category: 'modern' as const,
-      previewImageUrl: '/templates/modern-02-preview.jpg',
+      previewImageUrl: '/templates/modern-02-preview.svg',
       cssStyles: {
         primaryColor: '#2C3E50',
         secondaryColor: '#E74C3C',
@@ -112,7 +112,7 @@ async function main() {
       id: 'modern-03',
       name: 'Bold Typography',
       category: 'modern' as const,
-      previewImageUrl: '/templates/modern-03-preview.jpg',
+      previewImageUrl: '/templates/modern-03-preview.svg',
       cssStyles: {
         primaryColor: '#FF6B6B',
         secondaryColor: '#4ECDC4',
@@ -126,7 +126,7 @@ async function main() {
       id: 'modern-04',
       name: 'Gradient Sunset',
       category: 'modern' as const,
-      previewImageUrl: '/templates/modern-04-preview.jpg',
+      previewImageUrl: '/templates/modern-04-preview.svg',
       cssStyles: {
         primaryColor: '#FF7F50',
         secondaryColor: '#FFB6C1',
@@ -142,7 +142,7 @@ async function main() {
       id: 'romantic-01',
       name: 'Pink Blush',
       category: 'romantic' as const,
-      previewImageUrl: '/templates/romantic-01-preview.jpg',
+      previewImageUrl: '/templates/romantic-01-preview.svg',
       cssStyles: {
         primaryColor: '#FFB6C1',
         secondaryColor: '#FFC0CB',
@@ -156,7 +156,7 @@ async function main() {
       id: 'romantic-02',
       name: 'Lavender Dreams',
       category: 'romantic' as const,
-      previewImageUrl: '/templates/romantic-02-preview.jpg',
+      previewImageUrl: '/templates/romantic-02-preview.svg',
       cssStyles: {
         primaryColor: '#9370DB',
         secondaryColor: '#E6E6FA',
@@ -170,7 +170,7 @@ async function main() {
       id: 'romantic-03',
       name: 'Coral Garden',
       category: 'romantic' as const,
-      previewImageUrl: '/templates/romantic-03-preview.jpg',
+      previewImageUrl: '/templates/romantic-03-preview.svg',
       cssStyles: {
         primaryColor: '#FF7F50',
         secondaryColor: '#FFEFD5',
@@ -184,7 +184,7 @@ async function main() {
       id: 'romantic-04',
       name: 'Peach Blossom',
       category: 'romantic' as const,
-      previewImageUrl: '/templates/romantic-04-preview.jpg',
+      previewImageUrl: '/templates/romantic-04-preview.svg',
       cssStyles: {
         primaryColor: '#FFCBA4',
         secondaryColor: '#FFE4E1',
@@ -200,7 +200,7 @@ async function main() {
       id: 'minimal-01',
       name: 'Pure White',
       category: 'minimal' as const,
-      previewImageUrl: '/templates/minimal-01-preview.jpg',
+      previewImageUrl: '/templates/minimal-01-preview.svg',
       cssStyles: {
         primaryColor: '#333333',
         secondaryColor: '#666666',
@@ -214,7 +214,7 @@ async function main() {
       id: 'minimal-02',
       name: 'Black & White',
       category: 'minimal' as const,
-      previewImageUrl: '/templates/minimal-02-preview.jpg',
+      previewImageUrl: '/templates/minimal-02-preview.svg',
       cssStyles: {
         primaryColor: '#000000',
         secondaryColor: '#FFFFFF',
@@ -228,7 +228,7 @@ async function main() {
       id: 'minimal-03',
       name: 'Soft Gray',
       category: 'minimal' as const,
-      previewImageUrl: '/templates/minimal-03-preview.jpg',
+      previewImageUrl: '/templates/minimal-03-preview.svg',
       cssStyles: {
         primaryColor: '#708090',
         secondaryColor: '#D3D3D3',
@@ -242,7 +242,7 @@ async function main() {
       id: 'minimal-04',
       name: 'Clean Lines',
       category: 'minimal' as const,
-      previewImageUrl: '/templates/minimal-04-preview.jpg',
+      previewImageUrl: '/templates/minimal-04-preview.svg',
       cssStyles: {
         primaryColor: '#2F4F4F',
         secondaryColor: '#F5F5F5',

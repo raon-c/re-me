@@ -1,0 +1,37 @@
+<svg width="300" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#FF6B6B;stop-opacity:0.3" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="400" fill="url(#bg)" stroke="#FF6B6B" stroke-width="2"/>
+  
+  <!-- Header decoration -->
+  <rect x="50" y="40" width="200" height="2" fill="#FF6B6B" opacity="0.5"/>
+  
+  <!-- Title area -->
+  <rect x="60" y="80" width="180" height="20" fill="#FF6B6B" opacity="0.2" rx="2"/>
+  <rect x="80" y="110" width="140" height="15" fill="#FF6B6B" opacity="0.15" rx="2"/>
+  
+  <!-- Content area -->
+  <rect x="70" y="150" width="160" height="8" fill="#FF6B6B" opacity="0.1" rx="1"/>
+  <rect x="70" y="170" width="120" height="8" fill="#FF6B6B" opacity="0.1" rx="1"/>
+  <rect x="70" y="190" width="140" height="8" fill="#FF6B6B" opacity="0.1" rx="1"/>
+  
+  <!-- Decorative elements -->
+  <circle cx="150" cy="250" r="30" fill="none" stroke="#FF6B6B" stroke-width="1" opacity="0.3"/>
+  <circle cx="150" cy="250" r="20" fill="none" stroke="#FF6B6B" stroke-width="1" opacity="0.2"/>
+  
+  <!-- Footer area -->
+  <rect x="70" y="320" width="160" height="6" fill="#FF6B6B" opacity="0.1" rx="1"/>
+  <rect x="90" y="340" width="120" height="6" fill="#FF6B6B" opacity="0.1" rx="1"/>
+  
+  <!-- Category label -->
+  <text x="150" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#FF6B6B" opacity="0.7">MODERN</text>
+  
+  <!-- Footer decoration -->
+  <rect x="50" y="390" width="200" height="2" fill="#FF6B6B" opacity="0.5"/>
+</svg>
