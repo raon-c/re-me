@@ -4,8 +4,9 @@ import { z } from 'zod';
 // Auth validation schemas
 export const registerSchema = z.object({
   email: z
-    .email('올바른 이메일 주소를 입력해주세요.')
-    .min(1, '이메일을 입력해주세요.'),
+    .string()
+    .min(1, '이메일을 입력해주세요.')
+    .email('올바른 이메일 주소를 입력해주세요.'),
   password: z
     .string()
     .min(8, '비밀번호는 최소 8자 이상이어야 합니다.')
@@ -22,15 +23,16 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z
     .string()
-    .email('올바른 이메일 주소를 입력해주세요.')
-    .min(1, '이메일을 입력해주세요.'),
+    .min(1, '이메일을 입력해주세요.')
+    .email('올바른 이메일 주소를 입력해주세요.'),
   password: z.string().min(1, '비밀번호를 입력해주세요.'),
 });
 
 export const resetPasswordSchema = z.object({
   email: z
-    .email('올바른 이메일 주소를 입력해주세요.')
-    .min(1, '이메일을 입력해주세요.'),
+    .string()
+    .min(1, '이메일을 입력해주세요.')
+    .email('올바른 이메일 주소를 입력해주세요.'),
 });
 
 export const updatePasswordSchema = z.object({
@@ -48,7 +50,7 @@ export const updateProfileSchema = z.object({
     .string()
     .min(2, '이름은 최소 2자 이상이어야 합니다.')
     .max(100, '이름은 최대 100자까지 입력 가능합니다.'),
-  email: z.email('올바른 이메일 주소를 입력해주세요.').optional(),
+  email: z.string().email('올바른 이메일 주소를 입력해주세요.').optional(),
 });
 
 // Social login schema
@@ -56,7 +58,7 @@ export const socialLoginSchema = z.object({
   provider: z.enum(['google', 'kakao'], {
     message: '지원하지 않는 소셜 로그인 제공자입니다.',
   }),
-  redirectTo: z.string().url().optional(),
+  redirectTo: z.string().url('올바른 URL을 입력해주세요.').optional(),
 });
 
 // Type exports

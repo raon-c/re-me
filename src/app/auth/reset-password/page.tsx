@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 export default function ResetPasswordPage() {
@@ -12,7 +12,6 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
 
   const router = useRouter();
-  const searchParams = useSearchParams();
   const supabase = createClient();
 
   useEffect(() => {
@@ -58,7 +57,7 @@ export default function ResetPasswordPage() {
           router.push('/dashboard' as any);
         }, 2000);
       }
-    } catch (err) {
+    } catch {
       setError('비밀번호 재설정 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);

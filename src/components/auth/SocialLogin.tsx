@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
 
 interface SocialLoginProps {
   onError?: (error: string) => void;
@@ -36,25 +37,26 @@ export function SocialLogin({ onError, onLoading }: SocialLoginProps) {
     <div className="space-y-3">
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
+          <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">또는</span>
+          <span className="px-2 bg-background text-muted-foreground">또는</span>
         </div>
       </div>
 
       <div className="space-y-2">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => handleSocialLogin('google')}
           disabled={loadingProvider === 'google'}
-          className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full"
         >
           {loadingProvider === 'google' ? (
-            <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-muted-foreground border-t-foreground rounded-full animate-spin" />
           ) : (
             <>
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -75,19 +77,20 @@ export function SocialLogin({ onError, onLoading }: SocialLoginProps) {
               Google로 계속하기
             </>
           )}
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => handleSocialLogin('kakao')}
           disabled={loadingProvider === 'kakao'}
-          className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-yellow-300 hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-yellow-300 hover:bg-yellow-400 border-yellow-300 hover:border-yellow-400 text-black"
         >
           {loadingProvider === 'kakao' ? (
-            <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-gray-600 border-t-black rounded-full animate-spin" />
           ) : (
             <>
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="#000000"
                   d="M12 3C7.03 3 3 6.14 3 10.1c0 2.52 1.65 4.74 4.1 6.1l-.96 3.48c-.06.22.18.4.37.28L10.85 17c.38.04.77.06 1.15.06 4.97 0 9-3.14 9-7.1S16.97 3 12 3z"
@@ -96,7 +99,7 @@ export function SocialLogin({ onError, onLoading }: SocialLoginProps) {
               카카오로 계속하기
             </>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

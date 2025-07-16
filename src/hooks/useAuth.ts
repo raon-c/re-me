@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { clientAuth } from '@/lib/supabase/utils';
 import type { User, Session } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
+// AIDEV-NOTE: Comprehensive authentication hook with profile management
 type UserProfile = Database['public']['Tables']['users']['Row'];
 
 interface AuthState {
@@ -25,7 +25,7 @@ export function useAuth() {
 
   const supabase = createClient();
 
-  // Fetch user profile from database
+  // AIDEV-NOTE: Cached user profile fetching with error handling
   const fetchUserProfile = useCallback(
     async (userId: string): Promise<UserProfile | null> => {
       try {
@@ -49,7 +49,7 @@ export function useAuth() {
     [supabase]
   );
 
-  // Update auth state
+  // AIDEV-NOTE: Centralized auth state management with profile syncing
   const updateAuthState = useCallback(
     async (session: Session | null) => {
       if (session?.user) {
@@ -101,54 +101,87 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, [supabase.auth, updateAuthState]);
 
-  // Authentication methods
-  const signIn = useCallback(async (email: string, password: string) => {
-    setState((prev) => ({ ...prev, loading: true }));
-    const result = await clientAuth.signInWithPassword(email, password);
-    if (result.error) {
-      setState((prev) => ({ ...prev, loading: false }));
-    }
-    return result;
-  }, []);
+  // AIDEV-NOTE: Authentication methods with loading state management
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      setState((prev) => ({ ...prev, loading: true }));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        setState((prev) => ({ ...prev, loading: false }));
+      }
+      return { data, error };
+    },
+    [supabase.auth]
+  );
 
   const signUp = useCallback(
     async (email: string, password: string, name: string) => {
       setState((prev) => ({ ...prev, loading: true }));
-      const result = await clientAuth.signUp(email, password, name);
-      if (result.error) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          },
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        },
+      });
+      if (error) {
         setState((prev) => ({ ...prev, loading: false }));
       }
-      return result;
+      return { data, error };
     },
-    []
+    [supabase.auth]
   );
 
   const signInWithProvider = useCallback(
     async (provider: 'google' | 'kakao') => {
       setState((prev) => ({ ...prev, loading: true }));
-      const result = await clientAuth.signInWithOAuth(provider);
-      if (result.error) {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+        },
+      });
+      if (error) {
         setState((prev) => ({ ...prev, loading: false }));
       }
-      return result;
+      return { data, error };
     },
-    []
+    [supabase.auth]
   );
 
   const signOut = useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true }));
-    const result = await clientAuth.signOut();
-    return result;
-  }, []);
+    const { error } = await supabase.auth.signOut();
+    return { error };
+  }, [supabase.auth]);
 
-  const resetPassword = useCallback(async (email: string) => {
-    return await clientAuth.resetPassword(email);
-  }, []);
+  const resetPassword = useCallback(
+    async (email: string) => {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+      });
+      return { data, error };
+    },
+    [supabase.auth]
+  );
 
-  const updatePassword = useCallback(async (password: string) => {
-    return await clientAuth.updatePassword(password);
-  }, []);
+  const updatePassword = useCallback(
+    async (password: string) => {
+      const { data, error } = await supabase.auth.updateUser({
+        password,
+      });
+      return { data, error };
+    },
+    [supabase.auth]
+  );
 
+  // AIDEV-NOTE: Profile update with dual auth/database sync
   const updateProfile = useCallback(
     async (updates: { name?: string; email?: string }) => {
       if (!state.user) {
@@ -158,7 +191,7 @@ export function useAuth() {
       try {
         // Update user metadata in auth
         if (updates.email) {
-          const { error: authError } = await clientAuth.updateUser({
+          const { error: authError } = await supabase.auth.updateUser({
             email: updates.email,
           });
           if (authError) {
@@ -167,7 +200,7 @@ export function useAuth() {
         }
 
         if (updates.name) {
-          const { error: authError } = await clientAuth.updateUser({
+          const { error: authError } = await supabase.auth.updateUser({
             data: { name: updates.name },
           });
           if (authError) {
@@ -204,6 +237,7 @@ export function useAuth() {
     [state.user, supabase]
   );
 
+  // AIDEV-NOTE: Account deletion with cascade cleanup
   const deleteAccount = useCallback(async () => {
     if (!state.user) {
       return { error: new Error('User not authenticated') };

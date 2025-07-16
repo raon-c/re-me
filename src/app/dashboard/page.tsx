@@ -86,19 +86,7 @@ export default function DashboardPage() {
 
         <div className="px-4 py-6 sm:px-0">
           {showProfile ? (
-            <UserProfile
-              onSuccess={() => {
-                setMessage({
-                  type: 'success',
-                  text: '프로필이 성공적으로 업데이트되었습니다.',
-                });
-                setTimeout(() => setMessage(null), 3000);
-              }}
-              onError={(error) => {
-                setMessage({ type: 'error', text: error });
-                setTimeout(() => setMessage(null), 5000);
-              }}
-            />
+            <UserProfile />
           ) : (
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">

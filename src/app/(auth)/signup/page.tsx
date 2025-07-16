@@ -1,217 +1,181 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { SocialLogin } from '@/components/auth/SocialLogin';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { registerSchema, type RegisterInput } from '@/lib/validations';
+
+// AIDEV-NOTE: User registration page with email verification flow
 
 export default function SignupPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
 
-  const router = useRouter();
   const { signUp } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const form = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+    },
+  });
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('비밀번호는 최소 6자 이상이어야 합니다.');
-      return;
-    }
-
-    if (formData.name.trim().length < 2) {
-      setError('이름은 최소 2자 이상이어야 합니다.');
-      return;
-    }
-
-    setLoading(true);
-
+  const onSubmit = async (data: RegisterInput) => {
     try {
-      const { error } = await signUp(
-        formData.email,
-        formData.password,
-        formData.name
-      );
+      const { error } = await signUp(data.email, data.password, data.name);
 
       if (error) {
-        setError(error.message);
+        form.setError('root', { message: error.message });
       } else {
+        setUserEmail(data.email);
         setSuccess(true);
       }
-    } catch (err) {
-      setError('회원가입 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
+    } catch {
+      form.setError('root', { message: '회원가입 중 오류가 발생했습니다.' });
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  // AIDEV-NOTE: Email verification success screen with Korean messaging
 
+  // Success screen
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-              이메일을 확인해 주세요
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              {formData.email}로 인증 메일을 보내드렸습니다.
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">이메일을 확인해 주세요</CardTitle>
+            <CardDescription>
+              {userEmail}로 인증 메일을 보내드렸습니다.
               <br />
               메일함을 확인하고 인증을 완료해 주세요.
-            </p>
-            <div className="mt-6">
-              <Link
-                href={'/login' as any}
-                className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                로그인 페이지로 이동
-              </Link>
-            </div>
-          </div>
-        </div>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link href="/login">로그인 페이지로 이동</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
+  // Signup form
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            회원가입
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">회원가입</CardTitle>
+          <CardDescription>
             또는{' '}
             <Link
-              href={'/login' as any}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              href="/login"
+              className="font-medium text-primary hover:underline"
             >
               기존 계정으로 로그인
             </Link>
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="sr-only">
-                이름
-              </label>
-              <input
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">이름</Label>
+              <Input
                 id="name"
-                name="name"
                 type="text"
+                placeholder="이름을 입력하세요"
                 autoComplete="name"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="이름"
-                value={formData.name}
-                onChange={handleChange}
+                {...form.register('name')}
               />
+              {form.formState.errors.name && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.name.message}
+                </p>
+              )}
             </div>
-            <div>
-              <label htmlFor="email" className="sr-only">
-                이메일 주소
-              </label>
-              <input
+
+            <div className="space-y-2">
+              <Label htmlFor="email">이메일 주소</Label>
+              <Input
                 id="email"
-                name="email"
                 type="email"
+                placeholder="이메일 주소를 입력하세요"
                 autoComplete="email"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="이메일 주소"
-                value={formData.email}
-                onChange={handleChange}
+                {...form.register('email')}
               />
+              {form.formState.errors.email && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.email.message}
+                </p>
+              )}
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                비밀번호
-              </label>
-              <input
+
+            <div className="space-y-2">
+              <Label htmlFor="password">비밀번호</Label>
+              <Input
                 id="password"
-                name="password"
                 type="password"
+                placeholder="비밀번호를 입력하세요 (최소 8자)"
                 autoComplete="new-password"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="비밀번호 (최소 6자)"
-                value={formData.password}
-                onChange={handleChange}
+                {...form.register('password')}
               />
+              {form.formState.errors.password && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.password.message}
+                </p>
+              )}
             </div>
-            <div>
-              <label htmlFor="confirmPassword" className="sr-only">
-                비밀번호 확인
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="비밀번호 확인"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
 
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
+            {form.formState.errors.root && (
+              <p className="text-sm text-destructive text-center">
+                {form.formState.errors.root.message}
+              </p>
+            )}
 
-          <div>
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={form.formState.isSubmitting}
+              className="w-full"
             >
-              {loading ? '가입 중...' : '회원가입'}
-            </button>
+              {form.formState.isSubmitting ? '가입 중...' : '회원가입'}
+            </Button>
+
+            <SocialLogin 
+              onError={(error) => form.setError('root', { message: error })}
+              onLoading={() => {}}
+            />
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-xs text-muted-foreground">
+              회원가입 시{' '}
+              <Link href="#" className="text-primary hover:underline">
+                서비스 이용약관
+              </Link>{' '}
+              및{' '}
+              <Link href="#" className="text-primary hover:underline">
+                개인정보 처리방침
+              </Link>
+              에 동의하는 것으로 간주됩니다.
+            </p>
           </div>
-
-          <SocialLogin onError={setError} onLoading={setLoading} />
-        </form>
-
-        <div className="text-center">
-          <p className="text-xs text-gray-500">
-            회원가입 시{' '}
-            <a href="#" className="text-indigo-600 hover:text-indigo-500">
-              서비스 이용약관
-            </a>{' '}
-            및{' '}
-            <a href="#" className="text-indigo-600 hover:text-indigo-500">
-              개인정보 처리방침
-            </a>
-            에 동의하는 것으로 간주됩니다.
-          </p>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
