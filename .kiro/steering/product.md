@@ -33,3 +33,29 @@ A web-based platform that enables users to easily create and share digital weddi
 - Mobile responsiveness across iOS Safari and Android Chrome
 - 80%+ test coverage
 - Support for 1000+ concurrent users
+
+## Implementation Status
+
+### Completed Features
+
+- ✅ Project setup and infrastructure
+- ✅ Authentication system with Supabase
+- ✅ Template system with categories (Classic, Modern, Romantic, Minimal)
+- ✅ Template preview functionality
+- ✅ Database schema design and implementation
+
+### In Progress Features
+
+- 🔄 Invitation editor with drag-and-drop interface
+- 🔄 Wedding information management
+- 🔄 RSVP system implementation
+- 🔄 Dashboard for invitation management
+
+### Upcoming Features
+
+- ⏳ Sharing functionality (KakaoTalk, SMS, email, URL)
+- ⏳ Analytics and statistics dashboard
+- ⏳ Guest list management
+- ⏳ Data export functionality
+- ⏳ PWA implementation for offline access
+- ⏳ Performance optimizations

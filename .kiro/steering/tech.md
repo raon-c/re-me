@@ -2,7 +2,7 @@
 
 ## Frontend Framework
 
-- **Next.js 14+** with App Router
+- **Next.js 15+** with App Router
 - **TypeScript 5.0+** for type safety
 - **React 18+** with Server Components and Client Components
 - **Tailwind CSS 3.3+** for mobile-first responsive design
@@ -10,9 +10,9 @@
 
 ## API & State Management
 
-- **tRPC 10+** for type-safe API communication
-- **TanStack Query 4+** for server state management (integrated with tRPC)
-- **Zod** for schema validation
+- **tRPC 11+** for type-safe API communication
+- **TanStack Query 5+** for server state management (integrated with tRPC)
+- **Zod 4+** for schema validation
 - **React Hook Form 7.0+** for form management
 
 ## Backend Services
@@ -22,7 +22,7 @@
   - Authentication (JWT + OAuth)
   - File storage
   - Real-time subscriptions
-- **Prisma 5.0+** as ORM (Supabase integration)
+- **Prisma 6.0+** as ORM (Supabase integration)
 
 ## Deployment & Hosting
 
@@ -59,13 +59,13 @@ npm run lint:fix
 
 ```bash
 # Generate Prisma client
-npx prisma generate
+npm run db:generate
 
 # Push schema changes
-npx prisma db push
+npm run db:push
 
 # Reset database
-npx prisma db reset
+npm run db:reset
 
 # Seed database
 npm run db:seed
@@ -93,9 +93,6 @@ npm test
 # Run tests in watch mode
 npm run test:watch
 
-# Run E2E tests
-npm run test:e2e
-
 # Generate test coverage
 npm run test:coverage
 ```
@@ -107,3 +104,16 @@ npm run test:coverage
 - Bundle size optimization with code splitting
 - Mobile-first responsive design
 - Support for 1000+ concurrent users
+
+## Implementation Progress
+
+- ✅ Project setup with Next.js 15, TypeScript, and Tailwind CSS
+- ✅ Shadcn/ui components integration
+- ✅ Supabase setup with authentication
+- ✅ Prisma ORM integration with Supabase
+- ✅ tRPC API setup with TanStack Query
+- ✅ Basic authentication flow (login, signup)
+- ✅ Template system implementation
+- 🔄 Working on invitation editor implementation
+- 🔄 Working on RSVP system
+- 🔄 Working on dashboard implementation

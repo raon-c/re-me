@@ -1,79 +1,72 @@
 # Project Structure
 
-## Next.js App Router Structure
+## Current Next.js App Router Structure
 
 ```
 src/
-├── app/                          # Next.js 14 App Router
+├── app/                          # Next.js 15 App Router
 │   ├── (auth)/                   # Route groups for auth pages
 │   │   ├── login/page.tsx
 │   │   └── signup/page.tsx
+│   ├── auth/                     # Auth callback routes
+│   │   ├── callback/page.tsx
+│   │   └── reset-password/page.tsx
 │   ├── dashboard/                # User dashboard
-│   │   ├── page.tsx
-│   │   └── [id]/page.tsx        # Individual invitation management
-│   ├── invitation/
-│   │   ├── create/page.tsx      # Invitation creation flow
-│   │   └── [code]/page.tsx      # Public invitation view
-│   ├── api/
-│   │   └── trpc/[trpc]/route.ts # tRPC API handler
-│   ├── layout.tsx               # Root layout with providers
-│   ├── page.tsx                 # Landing page
-│   ├── globals.css              # Global styles
-│   └── loading.tsx              # Global loading UI
+│   │   └── page.tsx
+│   ├── api/                      # API routes
+│   │   └── trpc/[trpc]/route.ts  # tRPC API handler
+│   ├── templates/                # Templates page
+│   │   └── page.tsx
+│   ├── layout.tsx                # Root layout with providers
+│   ├── page.tsx                  # Landing page
+│   ├── globals.css               # Global styles
+│   └── loading.tsx               # Global loading UI
 ├── components/
-│   ├── ui/                      # Shadcn/ui base components
+│   ├── ui/                       # Shadcn/ui base components
 │   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── form.tsx
 │   │   ├── input.tsx
-│   │   ├── modal.tsx
+│   │   ├── label.tsx
 │   │   └── ...
-│   ├── common/                  # Shared components
+│   ├── common/                   # Shared components
 │   │   ├── Header.tsx
-│   │   ├── Footer.tsx
-│   │   ├── LoadingSpinner.tsx
-│   │   └── ErrorBoundary.tsx
-│   ├── auth/                    # Authentication components
-│   │   ├── LoginForm.tsx
-│   │   ├── SignupForm.tsx
-│   │   └── SocialLogin.tsx
-│   ├── invitation/              # Invitation-related components
-│   │   ├── TemplateSelector.tsx
-│   │   ├── InvitationEditor.tsx
-│   │   ├── InvitationPreview.tsx
-│   │   └── ShareModal.tsx
-│   ├── rsvp/                    # RSVP components
-│   │   ├── RSVPForm.tsx
-│   │   └── RSVPConfirmation.tsx
-│   └── dashboard/               # Dashboard components
-│       ├── StatsDashboard.tsx
-│       ├── GuestList.tsx
-│       └── ExportData.tsx
-├── server/                      # tRPC server code
-│   ├── api/
-│   │   ├── routers/             # tRPC routers
-│   │   │   ├── auth.ts
-│   │   │   ├── invitation.ts
-│   │   │   ├── rsvp.ts
-│   │   │   └── template.ts
-│   │   ├── root.ts              # Root router
-│   │   └── trpc.ts              # tRPC configuration
-│   └── db/
-│       ├── schema.ts            # Prisma schema
-│       └── index.ts             # Database client
-├── lib/                         # Utility libraries
-│   ├── supabase.ts              # Supabase client configuration
-│   ├── trpc.ts                  # tRPC client configuration
-│   ├── utils.ts                 # General utilities
-│   └── validations.ts           # Zod validation schemas
-├── hooks/                       # Custom React hooks
-│   ├── useAuth.ts               # Authentication hook
-│   ├── useInvitation.ts         # Invitation management hook
-│   └── useRSVP.ts               # RSVP hook
-├── types/                       # TypeScript type definitions
-│   ├── auth.ts
-│   ├── invitation.ts
-│   └── rsvp.ts
-└── styles/                      # Additional styles
-    └── components.css           # Component-specific styles
+│   │   └── Footer.tsx
+│   ├── auth/                     # Authentication components
+│   │   ├── SocialLogin.tsx
+│   │   └── UserProfile.tsx
+│   ├── invitation/               # Invitation-related components
+│   │   ├── TemplateCard.tsx
+│   │   ├── TemplatePreviewModal.tsx
+│   │   └── TemplateSelector.tsx
+│   └── providers/                # Provider components
+│       └── trpc-provider.tsx
+├── server/                       # tRPC server code
+│   └── api/
+│       ├── routers/              # tRPC routers
+│       ├── root.ts               # Root router
+│       └── trpc.ts               # tRPC configuration
+├── lib/                          # Utility libraries
+│   ├── db.ts                     # Database client
+│   ├── server-api.ts             # Server API utilities
+│   ├── supabase/                 # Supabase utilities
+│   │   ├── client.ts             # Supabase client
+│   │   ├── server.ts             # Supabase server
+│   │   └── utils.ts              # Supabase utilities
+│   ├── trpc.ts                   # tRPC client configuration
+│   ├── utils.ts                  # General utilities
+│   └── validations.ts            # Zod validation schemas
+├── hooks/                        # Custom React hooks
+│   └── useAuth.ts                # Authentication hook
+├── types/                        # TypeScript type definitions
+│   ├── auth.ts                   # Auth types
+│   ├── database.ts               # Database types
+│   └── index.ts                  # Common types
+├── styles/                       # Additional styles
+│   └── templates.css             # Template-specific styles
+└── features/                     # Feature-specific code
+    └── wedding-editor/           # Wedding editor feature
+        └── lib/                  # Wedding editor utilities
 ```
 
 ## Key Architectural Patterns
@@ -82,10 +75,10 @@ src/
 
 - **Pages**: `page.tsx` (App Router convention)
 - **Layouts**: `layout.tsx`
-- **Components**: PascalCase (e.g., `InvitationEditor.tsx`)
+- **Components**: PascalCase (e.g., `TemplateSelector.tsx`)
 - **Hooks**: camelCase with `use` prefix (e.g., `useAuth.ts`)
 - **Utilities**: camelCase (e.g., `validations.ts`)
-- **Types**: camelCase (e.g., `invitation.ts`)
+- **Types**: camelCase (e.g., `auth.ts`)
 
 ### Component Organization
 
@@ -122,19 +115,19 @@ src/
 
 ```typescript
 // 1. React and Next.js imports
-import React from "react";
-import { NextPage } from "next";
+import React from 'react';
+import { NextPage } from 'next';
 
 // 2. Third-party libraries
-import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
 
 // 3. Internal imports (absolute paths)
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/trpc";
+import { Button } from '@/components/ui/button';
+import { api } from '@/lib/trpc';
 
 // 4. Relative imports
-import "./styles.css";
+import './styles.css';
 ```
 
 ### Component Structure
@@ -170,3 +163,12 @@ export default Component;
 - Implement code splitting with dynamic imports
 - Optimize images with Next.js Image component
 - Lazy load non-critical components
+
+## Implementation Progress
+
+- ✅ Basic project structure setup
+- ✅ Authentication components and routes
+- ✅ Template selection components
+- 🔄 Working on invitation editor components
+- 🔄 Working on RSVP components
+- 🔄 Working on dashboard components
