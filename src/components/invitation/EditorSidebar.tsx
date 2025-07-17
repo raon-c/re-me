@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,9 +12,13 @@ import {
   Bold,
   Italic,
   Trash2,
+  Upload,
+  Images,
 } from 'lucide-react';
 import { EditorElement } from '@/types/editor';
 import { cn } from '@/lib/utils';
+import { ImageUpload } from '@/components/common/ImageUpload';
+import { ImageGallery } from '@/components/common/ImageGallery';
 
 interface EditorSidebarProps {
   selectedElement: EditorElement | null;
@@ -78,6 +82,7 @@ export function EditorSidebar({
   onWeddingInfoUpdate,
   className,
 }: EditorSidebarProps) {
+  const [activeTab, setActiveTab] = useState<'info' | 'style' | 'images'>('info');
   const handleStyleUpdate = (styleUpdates: Partial<EditorElement['style']>) => {
     if (selectedElement) {
       onElementUpdate(selectedElement.id, {
@@ -104,16 +109,74 @@ export function EditorSidebar({
     }
   };
 
+  // 이미지 업로드 핸들러
+  const handleImageUploaded = (imageUrl: string) => {
+    if (selectedElement && selectedElement.type === 'image') {
+      onElementUpdate(selectedElement.id, {
+        content: imageUrl,
+      });
+    }
+  };
+
+  // 갤러리에서 이미지 선택 핸들러
+  const handleImageSelect = (imageUrl: string) => {
+    if (selectedElement && selectedElement.type === 'image') {
+      onElementUpdate(selectedElement.id, {
+        content: imageUrl,
+      });
+    }
+  };
+
   return (
     <div
       className={cn(
-        'w-80 bg-white border-l border-gray-200 p-4 overflow-y-auto',
+        'w-80 bg-white border-l border-gray-200 overflow-y-auto',
         className
       )}
     >
-      {/* Wedding Information Panel */}
-      <Card className="p-4 mb-6">
-        <h3 className="font-semibold text-lg mb-4">결혼식 정보</h3>
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab('info')}
+          className={cn(
+            'flex-1 px-4 py-3 text-sm font-medium transition-colors',
+            activeTab === 'info'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          )}
+        >
+          정보
+        </button>
+        <button
+          onClick={() => setActiveTab('style')}
+          className={cn(
+            'flex-1 px-4 py-3 text-sm font-medium transition-colors',
+            activeTab === 'style'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          )}
+        >
+          스타일
+        </button>
+        <button
+          onClick={() => setActiveTab('images')}
+          className={cn(
+            'flex-1 px-4 py-3 text-sm font-medium transition-colors',
+            activeTab === 'images'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+          )}
+        >
+          <Images className="h-4 w-4 inline mr-1" />
+          이미지
+        </button>
+      </div>
+
+      <div className="p-4">
+        {/* Wedding Information Panel */}
+        {activeTab === 'info' && (
+          <Card className="p-4 mb-6">
+            <h3 className="font-semibold text-lg mb-4">결혼식 정보</h3>
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2">
@@ -220,9 +283,10 @@ export function EditorSidebar({
           </div>
         </div>
       </Card>
+        )}
 
-      {/* Element Styling Panel */}
-      {selectedElement ? (
+        {/* Element Styling Panel */}
+        {activeTab === 'style' && selectedElement ? (
         <Card className="p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-lg">요소 스타일</h3>
@@ -433,14 +497,44 @@ export function EditorSidebar({
             </div>
           </div>
         </Card>
-      ) : (
-        <Card className="p-4">
-          <div className="text-center text-gray-500">
-            <p className="text-sm">요소를 선택하여</p>
-            <p className="text-sm">스타일을 편집하세요</p>
+        ) : activeTab === 'style' ? (
+          <Card className="p-4">
+            <div className="text-center text-gray-500">
+              <p className="text-sm">요소를 선택하여</p>
+              <p className="text-sm">스타일을 편집하세요</p>
+            </div>
+          </Card>
+        ) : null}
+
+        {/* Images Panel */}
+        {activeTab === 'images' && (
+          <div className="space-y-4">
+            {/* 이미지 업로드 */}
+            <Card className="p-4">
+              <h3 className="font-semibold text-lg mb-4 flex items-center">
+                <Upload className="h-5 w-5 mr-2" />
+                이미지 업로드
+              </h3>
+              <ImageUpload
+                onImageUploaded={handleImageUploaded}
+                options={{
+                  width: 800,
+                  height: 600,
+                  quality: 85,
+                  format: 'webp',
+                  createThumbnail: true,
+                }}
+              />
+            </Card>
+
+            {/* 이미지 갤러리 */}
+            <ImageGallery
+              onImageSelect={handleImageSelect}
+              selectable={true}
+            />
           </div>
-        </Card>
-      )}
+        )}
+      </div>
     </div>
   );
 }
