@@ -36,6 +36,41 @@
 - **Kakao/Google OAuth** for social login
 - **Resend** for email services
 
+## Next.js 15 Critical Guidelines
+
+### Middleware Requirements (CRITICAL)
+
+⚠️ **File Location**: Middleware MUST be placed at `src/middleware.ts` (NOT at root level)
+
+```typescript
+// ✅ CORRECT: src/middleware.ts
+export async function middleware(request: NextRequest) {
+  console.log('🔥 MIDDLEWARE:', request.nextUrl.pathname);
+  // ... implementation
+}
+
+export const config = {
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+};
+```
+
+### Middleware Debugging Checklist
+
+1. **File Location**: Verify middleware is in `src/middleware.ts`
+2. **Compilation**: Check `.next/server/middleware-manifest.json` exists
+3. **Execution**: Add console.log to verify middleware runs
+4. **Build Test**: Run `npm run build` to verify compilation
+5. **Route Test**: Use `curl -I` to verify redirects
+
+### Common Middleware Issues
+
+- **Not executing**: Wrong file location (should be `src/middleware.ts`)
+- **Auth session missing**: Cookie handling in Supabase createServerClient
+- **Build errors**: TypeScript or import issues
+- **Route matching**: Incorrect matcher patterns
+
 ## Common Commands
 
 ### Development
@@ -114,6 +149,7 @@ npm run test:coverage
 - ✅ tRPC API setup with TanStack Query
 - ✅ Basic authentication flow (login, signup)
 - ✅ Template system implementation
+- ✅ Middleware authentication control (src/middleware.ts)
 - 🔄 Working on invitation editor implementation
 - 🔄 Working on RSVP system
 - 🔄 Working on dashboard implementation

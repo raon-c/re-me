@@ -110,7 +110,7 @@ export const createInvitation = async (input: CreateInvitationInput) => {
 
 ### Full-Stack Framework
 
-- **Next.js 14+** with App Router
+- **Next.js 15+** with App Router
 - **TypeScript 5.0+** for type safety
 - **React 18+** with Server Components and Client Components
 - **Tailwind CSS 3.3+** for mobile-first responsive design
@@ -379,7 +379,46 @@ const initializeMap = async () => {
 
 ---
 
-## 8. Commit discipline
+## 8. Next.js 15 Critical Guidelines
+
+### Middleware Requirements (CRITICAL)
+
+- **File Location**: Middleware MUST be placed at `src/middleware.ts` (NOT at root level)
+- **Compilation Check**: Middleware is compiled and listed in `.next/server/middleware-manifest.json`
+- **Debug Pattern**: Always add console.log to verify middleware execution during development
+- **Matcher Config**: Use simplified matchers for better compatibility
+
+```typescript
+// ✅ CORRECT: src/middleware.ts
+export async function middleware(request: NextRequest) {
+  console.log('🔥 MIDDLEWARE:', request.nextUrl.pathname);
+  // ... implementation
+}
+
+export const config = {
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+};
+```
+
+### Common Middleware Issues & Solutions
+
+1. **Middleware not executing**: Check file is in `src/middleware.ts`
+2. **Auth session missing**: Ensure proper cookie handling in createServerClient
+3. **Build errors**: Verify middleware compiles successfully with `npm run build`
+4. **Route matching**: Test matcher patterns with console.log debugging
+
+### Middleware Debugging Steps
+
+1. Add console.log at middleware entry point
+2. Check `.next/server/middleware-manifest.json` for compilation
+3. Test with curl -I to verify redirects
+4. Check server logs for middleware execution
+
+---
+
+## 9. Commit discipline
 
 - **Granular commits**: One logical change per commit
 - **Tag AI-generated commits**: e.g., `feat: add RSVP form validation [AI]`
@@ -402,7 +441,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 9. Domain-specific terminology
+## 10. Domain-specific terminology
 
 - **청첩장 (Invitation)**: Digital wedding invitation with customizable templates
 - **템플릿 (Template)**: Pre-designed invitation layouts with themes (Classic, Modern, Romantic, Minimal)
@@ -419,7 +458,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 10. Key File & Pattern References
+## 11. Key File & Pattern References
 
 ### Important Files
 
@@ -429,6 +468,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - **Database Client**: ✅ `src/lib/db/index.ts`
 - **Supabase Client**: ✅ `src/lib/supabase/client.ts` and ✅ `src/lib/supabase/server.ts`
 - **Type Definitions**: ✅ `src/types/` (auth.ts, database.ts, index.ts)
+- **⚠️ Middleware**: ✅ `src/middleware.ts` (CRITICAL: Must be in src/ directory for Next.js 15)
 
 ### Common Patterns
 
@@ -441,7 +481,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 11. AI Assistant Workflow
+## 12. AI Assistant Workflow
 
 When responding to user instructions, follow this process:
 
@@ -463,7 +503,7 @@ When responding to user instructions, follow this process:
 
 ---
 
-## 12. Files to NOT modify
+## 13. Files to NOT modify
 
 - **`.kiro/`**: Project specifications and requirements (human-owned)
 - **`node_modules/`**: Package dependencies
