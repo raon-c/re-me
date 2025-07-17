@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '@/server/api/trpc';
 import { TRPCError } from '@trpc/server';
 import { db } from '@/lib/db';
+import { weddingInfoUpdateSchema } from '@/lib/wedding-validations';
 
 // AIDEV-NOTE: Validation schemas for invitation editor data
 const editorElementSchema = z.object({
@@ -337,6 +338,153 @@ export const invitationRouter = createTRPCRouter({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: '청첩장을 불러오는 중 오류가 발생했습니다.',
+        });
+      }
+    }),
+
+  // Update wedding information
+  updateWeddingInfo: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        weddingInfo: weddingInfoUpdateSchema,
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        // Verify ownership
+        const existingInvitation = await db.invitation.findUnique({
+          where: {
+            id: input.id,
+            userId: ctx.session.user.id,
+          },
+        });
+
+        if (!existingInvitation) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: '청첩장을 찾을 수 없습니다.',
+          });
+        }
+
+        // Prepare update data
+        const updateData: Record<string, any> = {};
+        
+        if (input.weddingInfo.groomName !== undefined) {
+          updateData.groomName = input.weddingInfo.groomName;
+        }
+        if (input.weddingInfo.brideName !== undefined) {
+          updateData.brideName = input.weddingInfo.brideName;
+        }
+        if (input.weddingInfo.weddingDate !== undefined) {
+          updateData.weddingDate = new Date(input.weddingInfo.weddingDate);
+        }
+        if (input.weddingInfo.weddingTime !== undefined) {
+          updateData.weddingTime = new Date('1970-01-01T' + input.weddingInfo.weddingTime + ':00');
+        }
+        if (input.weddingInfo.venueName !== undefined) {
+          updateData.venueName = input.weddingInfo.venueName;
+        }
+        if (input.weddingInfo.venueAddress !== undefined) {
+          updateData.venueAddress = input.weddingInfo.venueAddress;
+        }
+        if (input.weddingInfo.customMessage !== undefined) {
+          updateData.customMessage = input.weddingInfo.customMessage;
+        }
+        if (input.weddingInfo.dressCode !== undefined) {
+          updateData.dressCode = input.weddingInfo.dressCode;
+        }
+        if (input.weddingInfo.parkingInfo !== undefined) {
+          updateData.parkingInfo = input.weddingInfo.parkingInfo;
+        }
+        if (input.weddingInfo.mealInfo !== undefined) {
+          updateData.mealInfo = input.weddingInfo.mealInfo;
+        }
+        if (input.weddingInfo.specialNotes !== undefined) {
+          updateData.specialNotes = input.weddingInfo.specialNotes;
+        }
+        if (input.weddingInfo.rsvpEnabled !== undefined) {
+          updateData.rsvpEnabled = input.weddingInfo.rsvpEnabled;
+        }
+        if (input.weddingInfo.rsvpDeadline !== undefined) {
+          updateData.rsvpDeadline = input.weddingInfo.rsvpDeadline 
+            ? new Date(input.weddingInfo.rsvpDeadline)
+            : null;
+        }
+        if (input.weddingInfo.backgroundImageUrl !== undefined) {
+          updateData.backgroundImageUrl = input.weddingInfo.backgroundImageUrl;
+        }
+
+        const updatedInvitation = await db.invitation.update({
+          where: {
+            id: input.id,
+          },
+          data: updateData,
+        });
+
+        return updatedInvitation;
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: '결혼식 정보 업데이트 중 오류가 발생했습니다.',
+        });
+      }
+    }),
+
+  // Get wedding information
+  getWeddingInfo: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      try {
+        const invitation = await db.invitation.findUnique({
+          where: {
+            id: input.id,
+            userId: ctx.session.user.id,
+          },
+        });
+
+        if (!invitation) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: '청첩장을 찾을 수 없습니다.',
+          });
+        }
+
+        // Convert database fields to wedding info format
+        const weddingInfo = {
+          groomName: invitation.groomName,
+          brideName: invitation.brideName,
+          weddingDate: invitation.weddingDate.toISOString().split('T')[0],
+          weddingTime: invitation.weddingTime.toTimeString().slice(0, 5),
+          venueName: invitation.venueName,
+          venueAddress: invitation.venueAddress,
+          venueHall: '', // This field doesn't exist in current schema
+          groomContact: '', // This field doesn't exist in current schema
+          brideContact: '', // This field doesn't exist in current schema
+          groomParents: '', // This field doesn't exist in current schema
+          brideParents: '', // This field doesn't exist in current schema
+          customMessage: invitation.customMessage || '',
+          dressCode: invitation.dressCode || '',
+          parkingInfo: invitation.parkingInfo || '',
+          mealInfo: invitation.mealInfo || '',
+          specialNotes: invitation.specialNotes || '',
+          rsvpEnabled: invitation.rsvpEnabled,
+          rsvpDeadline: invitation.rsvpDeadline?.toISOString().split('T')[0] || '',
+          accountInfo: '', // This field doesn't exist in current schema
+          backgroundImageUrl: invitation.backgroundImageUrl || '',
+        };
+
+        return weddingInfo;
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: '결혼식 정보 조회 중 오류가 발생했습니다.',
         });
       }
     }),
