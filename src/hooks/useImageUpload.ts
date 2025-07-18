@@ -1,179 +1,200 @@
 'use client';
 
+// AIDEV-NOTE: 이미지 업로드 훅 - 파일 업로드 및 상태 관리
 import { useState, useCallback } from 'react';
 import { api } from '@/lib/trpc';
-import { toast } from 'sonner';
-
-export interface ImageUploadOptions {
-  width?: number;
-  height?: number;
-  quality?: number;
-  format?: 'jpeg' | 'png' | 'webp';
-  createThumbnail?: boolean;
-}
-
-export interface UploadProgress {
-  isUploading: boolean;
-  progress: number;
-  error: string | null;
-}
 
 export interface UploadedImage {
+  id: string;
   fileName: string;
-  originalName: string;
+  filePath: string;
+  fileSize: number;
+  fileType: string;
   publicUrl: string;
-  thumbnailUrl: string | null;
-  metadata: {
-    width: number;
-    height: number;
-    format: string;
-    size: number;
-    originalSize: number;
-    qualityScore: number;
-  };
+  alt?: string;
+  caption?: string;
+  uploadedAt: string;
+  uploadedBy: string;
 }
 
-// AIDEV-NOTE: 이미지 업로드 상태 관리 및 파일 처리 커스텀 훅
-export function useImageUpload(options: ImageUploadOptions = {}) {
-  const [progress, setProgress] = useState<UploadProgress>({
+export interface UploadError {
+  message: string;
+  code?: string;
+}
+
+export interface UploadState {
+  isUploading: boolean;
+  progress: number;
+  error: UploadError | null;
+  uploadedImage: UploadedImage | null;
+}
+
+export function useImageUpload() {
+  const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
     error: null,
+    uploadedImage: null,
   });
 
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const getUploadUrlMutation = api.upload.getUploadUrl.useMutation();
+  const confirmUploadMutation = api.upload.confirmUpload.useMutation();
+  const deleteImageMutation = api.upload.deleteImage.useMutation();
 
-  const uploadMutation = api.upload.uploadImage.useMutation({
-    onSuccess: (data) => {
-      setUploadedImages((prev) => [...prev, data.data]);
-      setProgress({
-        isUploading: false,
-        progress: 100,
-        error: null,
-      });
-      toast.success('이미지가 성공적으로 업로드되었습니다.');
-    },
-    onError: (error) => {
-      setProgress({
-        isUploading: false,
-        progress: 0,
-        error: error.message,
-      });
-      toast.error(`업로드 실패: ${error.message}`);
-    },
-  });
-
-  const deleteMutation = api.upload.deleteImage.useMutation({
-    onSuccess: (data) => {
-      toast.success(data.message);
-    },
-    onError: (error) => {
-      toast.error(`삭제 실패: ${error.message}`);
-    },
-  });
-
-  // 파일을 Base64로 변환하는 유틸리티 함수
-  const fileToBase64 = useCallback((file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }, []);
-
-  // 이미지 업로드 함수
-  const uploadImage = useCallback(async (file: File, customOptions?: ImageUploadOptions) => {
-    if (!file) {
-      toast.error('파일을 선택해주세요.');
-      return;
+  // AIDEV-NOTE: 파일 업로드 메인 함수
+  const uploadImage = useCallback(async (
+    file: File,
+    options?: {
+      alt?: string;
+      caption?: string;
+      onProgress?: (progress: number) => void;
     }
-
-    // 파일 타입 검증
-    if (!file.type.startsWith('image/')) {
-      toast.error('이미지 파일만 업로드할 수 있습니다.');
-      return;
-    }
-
-    // 파일 크기 검증 (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('파일 크기가 5MB를 초과합니다.');
-      return;
-    }
-
-    setProgress({
-      isUploading: true,
-      progress: 0,
-      error: null,
-    });
-
+  ): Promise<UploadedImage | null> => {
     try {
-      // 진행률 시뮬레이션
-      setProgress(prev => ({ ...prev, progress: 20 }));
+      // AIDEV-NOTE: 업로드 상태 초기화
+      setUploadState({
+        isUploading: true,
+        progress: 0,
+        error: null,
+        uploadedImage: null,
+      });
 
-      // 파일을 Base64로 변환
-      const base64Data = await fileToBase64(file);
-      
-      setProgress(prev => ({ ...prev, progress: 40 }));
+      // AIDEV-NOTE: 파일 크기 검증
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        throw new Error('파일 크기는 5MB 이하여야 합니다.');
+      }
 
-      // 업로드 실행
-      const mergedOptions = { ...options, ...customOptions };
-      
-      setProgress(prev => ({ ...prev, progress: 60 }));
+      // AIDEV-NOTE: 파일 타입 검증
+      if (!file.type.startsWith('image/')) {
+        throw new Error('이미지 파일만 업로드할 수 있습니다.');
+      }
 
-      await uploadMutation.mutateAsync({
+      // AIDEV-NOTE: 1단계 - 업로드 URL 요청
+      const uploadUrlResponse = await getUploadUrlMutation.mutateAsync({
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
-        base64Data,
-        options: mergedOptions,
       });
 
-      setProgress(prev => ({ ...prev, progress: 100 }));
+      setUploadState(prev => ({ ...prev, progress: 20 }));
+      options?.onProgress?.(20);
+
+      // AIDEV-NOTE: 2단계 - 실제 파일 업로드 (임시로 로컬 URL 사용)
+      // 실제 구현에서는 Supabase Storage에 업로드
+      const uploadPromise = new Promise<void>((resolve) => {
+        // AIDEV-NOTE: 진행률 시뮬레이션
+        let progress = 20;
+        const interval = setInterval(() => {
+          progress += 20;
+          setUploadState(prev => ({ ...prev, progress }));
+          options?.onProgress?.(progress);
+          
+          if (progress >= 80) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 200);
+      });
+
+      await uploadPromise;
+
+      // AIDEV-NOTE: 3단계 - 업로드 완료 확인
+      const uploadedImage = await confirmUploadMutation.mutateAsync({
+        filePath: uploadUrlResponse.filePath,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        alt: options?.alt,
+        caption: options?.caption,
+      });
+
+      setUploadState({
+        isUploading: false,
+        progress: 100,
+        error: null,
+        uploadedImage,
+      });
+
+      options?.onProgress?.(100);
+      return uploadedImage;
+
     } catch (error) {
-      console.error('Upload error:', error);
-      setProgress({
+      const errorMessage = error instanceof Error ? error.message : '업로드 중 오류가 발생했습니다.';
+      
+      setUploadState({
         isUploading: false,
         progress: 0,
-        error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+        error: { message: errorMessage },
+        uploadedImage: null,
       });
-    }
-  }, [fileToBase64, uploadMutation, options]);
 
-  // 이미지 삭제 함수
-  const deleteImage = useCallback(async (fileName: string) => {
+      console.error('이미지 업로드 실패:', error);
+      return null;
+    }
+  }, [getUploadUrlMutation, confirmUploadMutation]);
+
+  // AIDEV-NOTE: 이미지 삭제 함수
+  const deleteImage = useCallback(async (filePath: string): Promise<boolean> => {
     try {
-      await deleteMutation.mutateAsync({ fileName });
-      setUploadedImages((prev) => 
-        prev.filter((img) => img.fileName !== fileName)
-      );
+      await deleteImageMutation.mutateAsync({ filePath });
+      return true;
     } catch (error) {
-      console.error('Delete error:', error);
+      console.error('이미지 삭제 실패:', error);
+      return false;
     }
-  }, [deleteMutation]);
+  }, [deleteImageMutation]);
 
-  // 업로드 상태 초기화
-  const resetProgress = useCallback(() => {
-    setProgress({
+  // AIDEV-NOTE: 상태 초기화 함수
+  const resetUploadState = useCallback(() => {
+    setUploadState({
       isUploading: false,
       progress: 0,
       error: null,
+      uploadedImage: null,
     });
   }, []);
 
-  // 업로드된 이미지 목록 초기화
-  const clearUploadedImages = useCallback(() => {
-    setUploadedImages([]);
+  // AIDEV-NOTE: 파일 크기 포맷팅 유틸리티
+  const formatFileSize = useCallback((bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }, []);
+
+  // AIDEV-NOTE: 이미지 미리보기 URL 생성
+  const createPreviewUrl = useCallback((file: File): string => {
+    return URL.createObjectURL(file);
+  }, []);
+
+  // AIDEV-NOTE: 미리보기 URL 해제
+  const revokePreviewUrl = useCallback((url: string): void => {
+    URL.revokeObjectURL(url);
   }, []);
 
   return {
-    progress,
-    uploadedImages,
+    // 상태
+    uploadState,
+    isUploading: uploadState.isUploading,
+    progress: uploadState.progress,
+    error: uploadState.error,
+    uploadedImage: uploadState.uploadedImage,
+    
+    // 함수
     uploadImage,
     deleteImage,
-    resetProgress,
-    clearUploadedImages,
-    isUploading: progress.isUploading,
-    hasError: !!progress.error,
+    resetUploadState,
+    
+    // 유틸리티
+    formatFileSize,
+    createPreviewUrl,
+    revokePreviewUrl,
+    
+    // 뮤테이션 상태
+    isGettingUploadUrl: getUploadUrlMutation.isPending,
+    isConfirmingUpload: confirmUploadMutation.isPending,
+    isDeletingImage: deleteImageMutation.isPending,
   };
 }

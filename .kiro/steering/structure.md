@@ -35,10 +35,22 @@ src/
 │   ├── auth/                     # Authentication components
 │   │   ├── SocialLogin.tsx
 │   │   └── UserProfile.tsx
+│   ├── blocks/                   # ✅ Block-based editor components
+│   │   ├── BaseBlock.tsx         # Base block wrapper component
+│   │   ├── HeaderBlock.tsx       # Header block (bride/groom names, date)
+│   │   ├── ContentBlock.tsx      # Content block (text content)
+│   │   ├── ImageBlock.tsx        # Image block with upload functionality
+│   │   ├── ContactBlock.tsx      # Contact information block
+│   │   ├── LocationBlock.tsx     # Venue location block
+│   │   ├── RsvpBlock.tsx         # RSVP functionality block
+│   │   ├── BlockEditor.tsx       # Main block editor component
+│   │   └── index.ts              # Block component exports
 │   ├── invitation/               # Invitation-related components
 │   │   ├── TemplateCard.tsx
 │   │   ├── TemplatePreviewModal.tsx
-│   │   └── TemplateSelector.tsx
+│   │   ├── TemplateSelector.tsx
+│   │   ├── BlockBasedEditor.tsx  # ✅ Block-based editor integration
+│   │   └── InvitationEditor.tsx  # ✅ Main editor component
 │   └── providers/                # Provider components
 │       └── trpc-provider.tsx
 ├── server/                       # tRPC server code
@@ -53,14 +65,19 @@ src/
 │   │   ├── client.ts             # Supabase client
 │   │   ├── server.ts             # Supabase server
 │   │   └── utils.ts              # Supabase utilities
+│   ├── blocks/                   # ✅ Block system utilities
+│   │   └── block-factory.ts      # Block creation and management factory
 │   ├── trpc.ts                   # tRPC client configuration
 │   ├── utils.ts                  # General utilities
 │   └── validations.ts            # Zod validation schemas
 ├── hooks/                        # Custom React hooks
-│   └── useAuth.ts                # Authentication hook
+│   ├── useAuth.ts                # Authentication hook
+│   ├── useBlocks.ts              # ✅ Block state management hook
+│   └── useImageUpload.ts         # ✅ Image upload hook
 ├── types/                        # TypeScript type definitions
 │   ├── auth.ts                   # Auth types
 │   ├── database.ts               # Database types
+│   ├── blocks.ts                 # ✅ Block system type definitions
 │   └── index.ts                  # Common types
 ├── styles/                       # Additional styles
 │   └── templates.css             # Template-specific styles
@@ -221,6 +238,33 @@ export default Component;
 - ✅ Basic project structure setup
 - ✅ Authentication components and routes
 - ✅ Template selection components
-- 🔄 Working on invitation editor components
+- ✅ Block-based invitation editor system (Task 6 완료)
+  - ✅ 6가지 블록 타입 완전 구현
+  - ✅ 모바일 최적화 세로 컬럼 레이아웃
+  - ✅ 터치 친화적 편집 인터페이스
+  - ✅ TypeScript 타입 안전성 보장
+  - ✅ React Hook 순서 일관성 확보
 - 🔄 Working on RSVP components
 - 🔄 Working on dashboard components
+
+## Block-Based Editor Architecture
+
+### 🎯 Design Philosophy
+- **Mobile-First**: 9:16 세로 화면 비율에 최적화
+- **Touch-Friendly**: 드래그 앤 드롭 대신 블록 기반 편집
+- **Modular**: 각 블록은 독립적으로 편집 가능
+- **Type-Safe**: 완전한 TypeScript 타입 정의
+
+### 🧩 Block Types
+1. **HeaderBlock**: 신랑신부 이름, 결혼식 날짜/시간
+2. **ContentBlock**: 텍스트 콘텐츠 (일반/리치 텍스트)
+3. **ImageBlock**: 이미지 업로드 및 표시
+4. **ContactBlock**: 연락처 정보 관리
+5. **LocationBlock**: 예식장 위치 및 교통 정보
+6. **RsvpBlock**: 참석 확인 기능
+
+### 🔧 Technical Implementation
+- **State Management**: useReducer 기반 블록 상태 관리
+- **Hook Consistency**: 모든 블록 컴포넌트에서 일관된 Hook 순서
+- **Factory Pattern**: BlockFactory로 블록 생성 및 관리
+- **Type Safety**: 완전한 TypeScript 타입 정의

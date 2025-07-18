@@ -14,7 +14,7 @@ _Last updated 2025-07-18_
 **Core Features**:
 
 - **Template-based Design**: 15+ wedding invitation templates categorized by theme (Classic, Modern, Romantic, Minimal)
-- **Mobile-First Editor**: Drag-and-drop interface with touch-friendly editing capabilities
+- **Mobile-First Editor**: Block-based modular interface with touch-friendly editing capabilities
 - **Wedding Information Management**: Date, time, venue, contact details with integrated map services
 - **RSVP System**: Guest response collection with attendance tracking and message features
 - **Sharing & Distribution**: Multiple sharing options (KakaoTalk, SMS, email, URL)
@@ -181,10 +181,22 @@ src/
 │   ├── auth/                     # ✅ 인증 컴포넌트 완료
 │   │   ├── SocialLogin.tsx
 │   │   └── UserProfile.tsx
-│   ├── invitation/               # ✅ 템플릿 관련 컴포넌트 완료
+│   ├── blocks/                   # ✅ 블록 기반 에디터 컴포넌트 완료
+│   │   ├── BaseBlock.tsx         # 기본 블록 래퍼
+│   │   ├── HeaderBlock.tsx       # 헤더 블록 (신랑신부 이름, 날짜)
+│   │   ├── ContentBlock.tsx      # 콘텐츠 블록 (텍스트)
+│   │   ├── ImageBlock.tsx        # 이미지 블록
+│   │   ├── ContactBlock.tsx      # 연락처 블록
+│   │   ├── LocationBlock.tsx     # 위치 블록
+│   │   ├── RsvpBlock.tsx         # RSVP 블록
+│   │   ├── BlockEditor.tsx       # 블록 에디터 메인 컴포넌트
+│   │   └── index.ts              # 블록 컴포넌트 내보내기
+│   ├── invitation/               # ✅ 청첩장 관련 컴포넌트 완료
 │   │   ├── TemplateCard.tsx
 │   │   ├── TemplatePreviewModal.tsx
-│   │   └── TemplateSelector.tsx
+│   │   ├── TemplateSelector.tsx
+│   │   ├── BlockBasedEditor.tsx  # 블록 기반 에디터 통합
+│   │   └── InvitationEditor.tsx  # 메인 에디터 컴포넌트
 │   ├── providers/                # ✅ 프로바이더 컴포넌트 완료
 │   │   └── trpc-provider.tsx
 │   ├── rsvp/                     # 🚧 RSVP 컴포넌트 (계획됨)
@@ -202,14 +214,19 @@ src/
 │   ├── supabase/
 │   │   ├── client.ts             # ✅ Supabase 클라이언트 설정
 │   │   └── server.ts             # ✅ Supabase 서버 설정
+│   ├── blocks/                   # ✅ 블록 시스템 유틸리티 완료
+│   │   └── block-factory.ts      # 블록 생성 및 관리 팩토리
 │   ├── trpc.ts                   # ✅ tRPC 클라이언트 설정
 │   ├── utils.ts                  # ✅ 일반 유틸리티
 │   └── validations.ts            # ✅ Zod 검증 스키마
 ├── hooks/                        # ✅ 커스텀 React 훅 완료
-│   └── useAuth.ts                # ✅ 인증 훅
+│   ├── useAuth.ts                # ✅ 인증 훅
+│   ├── useBlocks.ts              # ✅ 블록 상태 관리 훅
+│   └── useImageUpload.ts         # ✅ 이미지 업로드 훅
 ├── types/                        # ✅ TypeScript 타입 정의 완료
 │   ├── auth.ts
 │   ├── database.ts
+│   ├── blocks.ts                 # ✅ 블록 시스템 타입 정의
 │   └── index.ts
 └── styles/                       # 추가 스타일
 ```
@@ -251,7 +268,16 @@ This is a mobile wedding invitation platform with the following core entities:
 - ✅ Built with shadcn/ui component library - 완료
 - ✅ Configured in `components.json` with Tailwind CSS integration - 완료
 - ✅ Korean language support (locale: "ko") - 완료
-- ✅ Mobile-first responsive design with touch-friendly interfaces - 진행 중
+- ✅ Mobile-first responsive design with touch-friendly interfaces - 완료
+
+### Block-Based Editor System
+
+- ✅ **6가지 블록 타입**: Header, Content, Image, Contact, Location, RSVP
+- ✅ **모바일 최적화**: 9:16 세로 화면 비율에 맞춘 레이아웃
+- ✅ **터치 친화적 인터페이스**: 드래그 앤 드롭 대신 블록 기반 편집
+- ✅ **타입 안전성**: TypeScript로 완전 타입 정의
+- ✅ **상태 관리**: useReducer 기반 블록 상태 관리
+- ✅ **React Hook 일관성**: 모든 컴포넌트에서 Hook 순서 보장
 
 ---
 
@@ -339,13 +365,20 @@ const initializeMap = async () => {
    - 템플릿 선택 UI 및 미리보기 컴포넌트
    - 15개 기본 템플릿 데이터 생성
 
+4. **Block-Based Invitation Editor** (Task 6) - ✅ 완료
+   - 6가지 블록 타입 구현 (Header, Content, Image, Contact, Location, RSVP)
+   - 모바일 최적화 세로 컬럼 레이아웃 (9:16 화면 비율)
+   - 터치 친화적 블록 편집 인터페이스
+   - 블록 추가/삭제/순서 변경/복사 기능
+   - DND 방식 대신 블록 기반 접근 방식 채택
+   - TypeScript 타입 안전성 보장 및 React Hook 순서 일관성 확보
+
 ### 🚧 Next Implementation Steps
 
-1. **Invitation Editor** (Task 6) - 청첩장 편집 기능
-2. **Wedding Information Forms** (Task 7) - 결혼식 정보 입력
-3. **Invitation CRUD** (Task 8) - 청첩장 관리 기능
-4. **Sharing Features** (Task 9) - 공유 및 공개 조회
-5. **RSVP System** (Task 10) - 참석 응답 시스템
+1. **Wedding Information Forms** (Task 7) - 결혼식 정보 입력
+2. **Invitation CRUD** (Task 8) - 청첩장 관리 기능
+3. **Sharing Features** (Task 9) - 공유 및 공개 조회
+4. **RSVP System** (Task 10) - 참석 응답 시스템
 
 ### Environment Variables Required
 

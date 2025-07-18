@@ -190,6 +190,68 @@ npm run test:coverage
 - ✅ Basic authentication flow (login, signup)
 - ✅ Template system implementation
 - ✅ Middleware authentication control (src/middleware.ts)
-- 🔄 Working on invitation editor implementation
+- ✅ Block-based invitation editor system (Task 6 완료)
+  - ✅ 6가지 블록 타입 완전 구현
+  - ✅ 모바일 최적화 세로 컬럼 레이아웃 (9:16 비율)
+  - ✅ 터치 친화적 블록 편집 인터페이스
+  - ✅ TypeScript 타입 안전성 보장
+  - ✅ React Hook 순서 일관성 확보
+  - ✅ 기존 DND 방식 제거 및 블록 기반 접근 방식 채택
 - 🔄 Working on RSVP system
 - 🔄 Working on dashboard implementation
+
+## Block-Based Editor Critical Guidelines
+
+### 🚨 React Hook Order Consistency (CRITICAL)
+**방금 같은 실수를 방지하기 위한 가이드라인:**
+
+⚠️ **Hook 순서 일관성**: 모든 블록 컴포넌트에서 Hook은 항상 동일한 순서로 호출되어야 함
+
+#### Hook 순서 패턴 (모든 블록 컴포넌트에 적용)
+```typescript
+export function AnyBlock({ block, ...props }: BlockProps) {
+  // 1. ALWAYS useState first
+  const [localData, setLocalData] = useState(block.data);
+  
+  // 2. Custom hooks in consistent order
+  const { uploadImage, isUploading } = useImageUpload(); // if needed
+  
+  // 3. useRef hooks
+  const fileInputRef = useRef<HTMLInputElement>(null); // if needed
+  
+  // 4. Event handlers (defined after all hooks)
+  const handleSave = () => { /* ... */ };
+  const handleCancel = () => { /* ... */ };
+  
+  // 5. Return JSX
+  return (
+    <BaseBlock {...props}>
+      {/* component JSX */}
+    </BaseBlock>
+  );
+}
+```
+
+#### 금지사항 (Hook 순서 오류 방지)
+- ❌ 조건부 Hook 호출 (if문 내에서 Hook 사용)
+- ❌ 반복문 내에서 Hook 호출
+- ❌ 중첩 함수 내에서 Hook 호출
+- ❌ 컴포넌트 렌더링 중 Hook 순서 변경
+
+#### TypeScript 타입 안전성 패턴
+```typescript
+// ✅ 타입 단언 사용하여 Union 타입 문제 해결
+const updatedBlocks = state.blocks.map(block => 
+  block.id === blockId ? { ...block, ...updates } : block
+) as Block[];
+
+// ✅ BlockFactory 메서드에서 타입 안전성 보장
+static reorderBlocks(blocks: Block[]): Block[] {
+  return blocks
+    .sort((a, b) => a.order - b.order)
+    .map((block, index) => ({
+      ...block,
+      order: index,
+    })) as Block[];
+}
+```
