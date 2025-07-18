@@ -96,6 +96,45 @@ export const templateRenderDataSchema = z.object({
   backgroundImageUrl: z.string().url().optional(),
 });
 
+// AIDEV-NOTE: Wedding info validation schema with RSVP settings
+export const weddingInfoSchema = z.object({
+  brideName: z.string().min(1, '신부 이름을 입력해주세요.').max(50, '이름은 최대 50자까지 입력 가능합니다.'),
+  groomName: z.string().min(1, '신랑 이름을 입력해주세요.').max(50, '이름은 최대 50자까지 입력 가능합니다.'),
+  weddingDate: z.string().min(1, '결혼식 날짜를 선택해주세요.'),
+  weddingTime: z.string().min(1, '결혼식 시간을 선택해주세요.'),
+  venue: z.string().min(1, '예식장 이름을 입력해주세요.').max(100, '예식장 이름은 최대 100자까지 입력 가능합니다.'),
+  venueAddress: z.string().min(1, '예식장 주소를 입력해주세요.').max(200, '주소는 최대 200자까지 입력 가능합니다.'),
+  contact: z.string().min(1, '연락처를 입력해주세요.').max(50, '연락처는 최대 50자까지 입력 가능합니다.'),
+  rsvpEnabled: z.boolean().default(true),
+  rsvpDeadline: z.string().optional(),
+}).refine((data) => {
+  // RSVP deadline validation
+  if (data.rsvpEnabled && data.rsvpDeadline) {
+    const deadline = new Date(data.rsvpDeadline);
+    const wedding = new Date(data.weddingDate);
+    const today = new Date();
+    
+    // Deadline must be after today and before wedding date
+    return deadline >= today && deadline <= wedding;
+  }
+  return true;
+}, {
+  message: 'RSVP 마감일은 오늘 이후이면서 결혼식 날짜 이전이어야 합니다.',
+  path: ['rsvpDeadline']
+});
+
+// RSVP response validation schema
+export const rsvpResponseSchema = z.object({
+  invitationId: z.string().min(1, '청첩장 ID는 필수입니다.'),
+  guestName: z.string().min(1, '이름을 입력해주세요.').max(50, '이름은 최대 50자까지 입력 가능합니다.'),
+  attendanceStatus: z.enum(['attending', 'not_attending'], {
+    message: '참석 여부를 선택해주세요.',
+  }),
+  companionCount: z.number().min(0, '동반자 수는 0 이상이어야 합니다.').max(10, '동반자 수는 최대 10명까지 가능합니다.').default(0),
+  message: z.string().max(200, '메시지는 최대 200자까지 입력 가능합니다.').optional(),
+  phoneNumber: z.string().min(1, '연락처를 입력해주세요.').max(20, '연락처는 최대 20자까지 입력 가능합니다.').optional(),
+});
+
 // Type exports
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -110,3 +149,7 @@ export type TemplateInput = z.infer<typeof templateSchema>;
 export type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
 export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
 export type TemplateRenderDataInput = z.infer<typeof templateRenderDataSchema>;
+
+// Wedding info and RSVP type exports
+export type WeddingInfoInput = z.infer<typeof weddingInfoSchema>;
+export type RsvpResponseInput = z.infer<typeof rsvpResponseSchema>;

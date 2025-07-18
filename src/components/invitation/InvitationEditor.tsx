@@ -51,8 +51,8 @@ export function InvitationEditor({
       toast.success('청첩장이 저장되었습니다.');
       utils.invitation.getById.invalidate({ id: invitationId! });
     },
-    onError: (error: any) => {
-      toast.error(error.message);
+    onError: (error: unknown) => {
+      toast.error(error instanceof Error ? error.message : '저장 중 오류가 발생했습니다.');
     },
   });
 
@@ -109,7 +109,15 @@ export function InvitationEditor({
     try {
       const editorState = {
         elements: state.elements,
-        weddingInfo: state.weddingInfo,
+        weddingInfo: {
+          ...state.weddingInfo,
+          // Ensure RSVP settings are included
+          rsvpEnabled:
+            state.weddingInfo.rsvpEnabled !== undefined
+              ? state.weddingInfo.rsvpEnabled
+              : true,
+          rsvpDeadline: state.weddingInfo.rsvpDeadline || '',
+        },
         templateId: state.template?.id,
       };
 

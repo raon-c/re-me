@@ -20,6 +20,8 @@ const initialState: EditorState = {
     venue: '',
     venueAddress: '',
     contact: '',
+    rsvpEnabled: true,
+    rsvpDeadline: '',
   },
   isDirty: false,
   lastSaved: null,
