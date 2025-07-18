@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-_Last updated 2025-07-17_
+_Last updated 2025-07-18_
 
 > **Purpose** – This file is the onboarding manual for every AI assistant (Claude, Cursor, GPT, etc.) and every human who edits this repository.  
 > It encodes our coding standards, guard-rails, and workflow practices so the _human decision-making_ (architecture, business logic, UX) stays in human hands.
@@ -34,6 +34,8 @@ _Last updated 2025-07-17_
 | G-3 | Follow lint/style configs (`eslint`, `prettier`, `typescript`). Use `npm run lint:fix` and `npm run type-check` before commits. | ❌ Reformat code to any other style or ignore TypeScript errors.                                     |
 | G-4 | For changes >300 LOC or >3 files, **ask for confirmation** before proceeding.                                                   | ❌ Refactor large modules or change core architecture without human guidance.                        |
 | G-5 | Stay within current task context. Reference tasks.md for implementation sequence.                                               | ❌ Jump to unrelated features or skip implementation steps without discussion.                       |
+| G-6 | **BEFORE component conversion**: Audit for hooks, event handlers, browser APIs. Plan server/client boundaries.                 | ❌ Convert components without checking dependencies. Never mix server/client patterns.              |
+| G-7 | **ALWAYS** implement graceful fallbacks for missing database tables or API failures.                                           | ❌ Assume database tables exist. Never hard-code dependencies without error handling.               |
 
 ---
 
@@ -379,7 +381,91 @@ const initializeMap = async () => {
 
 ---
 
-## 8. Next.js 15 Critical Guidelines
+## 8. Server vs Client Components (CRITICAL)
+
+### Component Architecture Rules
+
+**MUST FOLLOW**: Always identify component type before making changes:
+
+1. **Server Components** (default in App Router):
+   - ✅ Data fetching with `await`
+   - ✅ Direct database access
+   - ✅ Server-only APIs (cookies, headers)
+   - ✅ No browser APIs or event handlers
+   - ❌ NO `useState`, `useEffect`, or React hooks
+   - ❌ NO event handlers (`onClick`, `onChange`)
+   - ❌ NO browser APIs (`localStorage`, `window`)
+
+2. **Client Components** (require `'use client'`):
+   - ✅ Interactive features (forms, buttons)
+   - ✅ React hooks (`useState`, `useEffect`)
+   - ✅ Browser APIs and event handlers
+   - ✅ State management
+   - ❌ NO direct server-only APIs
+
+### Critical Migration Patterns
+
+**WRONG**: Converting client hook-dependent components to server components
+```typescript
+// ❌ BREAKS: useAuth hook in server component
+export default async function Dashboard() {
+  const { user } = useAuth(); // ERROR: hooks not allowed
+  return <div>{user?.email}</div>;
+}
+```
+
+**CORRECT**: Server component with client component children
+```typescript
+// ✅ Server component with data fetching
+export default async function Dashboard() {
+  const userData = await getUserData(); // Server-side data
+  return (
+    <div>
+      <ServerDataDisplay userData={userData} />
+      <ClientInteractiveHeader userData={userData} />
+    </div>
+  );
+}
+
+// ✅ Client component for interactions
+'use client';
+export function ClientInteractiveHeader({ userData }: { userData: UserData }) {
+  const [showModal, setShowModal] = useState(false);
+  return <button onClick={() => setShowModal(true)}>Profile</button>;
+}
+```
+
+### Data Flow Patterns
+
+1. **Server → Client**: Pass server data as props
+2. **Client → Server**: Use server actions or API routes
+3. **Mixed Components**: Server components can render client components, but not vice versa
+
+### Database Integration Rules
+
+**ALWAYS** handle missing database tables gracefully:
+```typescript
+// ✅ CORRECT: Graceful degradation
+try {
+  const profile = await supabase.from('users').select('*').single();
+  return profile.data;
+} catch (error) {
+  // AIDEV-NOTE: Fallback to auth metadata if users table missing
+  console.warn('Users table not found, using auth data:', error);
+  return user.user_metadata;
+}
+```
+
+### Before Converting Components:
+
+1. **Audit Dependencies**: Check for hooks, event handlers, browser APIs
+2. **Plan Data Flow**: Identify what needs server vs client rendering
+3. **Create Boundaries**: Split complex components into server/client parts
+4. **Test Gracefully**: Ensure fallbacks for missing data/tables
+
+---
+
+## 9. Next.js 15 Critical Guidelines
 
 ### Middleware Requirements (CRITICAL)
 
@@ -488,12 +574,43 @@ When responding to user instructions, follow this process:
 1. **Consult Guidance**: Reference this CLAUDE.md and tasks.md for context
 2. **Clarify Ambiguities**: Ask targeted questions about business logic or UX decisions
 3. **Break Down & Plan**: Create implementation plan following project conventions
-4. **Trivial Tasks**: Proceed immediately for simple changes
-5. **Non-Trivial Tasks**: Present plan for review before implementation
-6. **Track Progress**: Use todo lists for multi-step tasks
-7. **Update Documentation**: Add/update AIDEV- comments and documentation
-8. **Quality Check**: Run linting and type checking before commits
-9. **User Review**: Request feedback on completed work
+4. **Component Analysis**: For ANY component changes, complete the Server/Client Component Checklist below
+5. **Trivial Tasks**: Proceed immediately for simple changes
+6. **Non-Trivial Tasks**: Present plan for review before implementation
+7. **Track Progress**: Use todo lists for multi-step tasks
+8. **Update Documentation**: Add/update AIDEV- comments and documentation
+9. **Quality Check**: Run linting and type checking before commits
+10. **User Review**: Request feedback on completed work
+
+### Server/Client Component Checklist (MANDATORY)
+
+**BEFORE making ANY component changes, complete this checklist:**
+
+#### 1. Identify Current Component Type
+- [ ] Check for `'use client'` directive
+- [ ] Audit for React hooks (`useState`, `useEffect`, etc.)
+- [ ] Audit for event handlers (`onClick`, `onChange`, etc.)
+- [ ] Audit for browser APIs (`localStorage`, `window`, etc.)
+
+#### 2. Determine Target Component Type
+- [ ] Will component need server-side data fetching?
+- [ ] Will component need interactivity/state management?
+- [ ] Will component need browser APIs?
+
+#### 3. Plan Component Architecture
+- [ ] If mixing concerns: Plan server/client boundary split
+- [ ] Identify data flow patterns (server → client props)
+- [ ] Plan fallback strategies for missing data/APIs
+
+#### 4. Implement Error Handling
+- [ ] Add try/catch blocks for database operations
+- [ ] Implement graceful fallbacks for missing tables
+- [ ] Add user-friendly error messages in Korean
+
+#### 5. Test Integration Points
+- [ ] Verify server components don't use client-only features
+- [ ] Verify client components receive proper props
+- [ ] Test error scenarios and fallback paths
 
 ### Session Boundaries
 

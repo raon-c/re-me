@@ -38,6 +38,46 @@
 
 ## Next.js 15 Critical Guidelines
 
+### Server vs Client Components (CRITICAL)
+
+⚠️ **Component Architecture**: Always identify component type BEFORE making changes
+
+#### Server Components (default)
+- ✅ Data fetching with `await`
+- ✅ Direct database access  
+- ✅ Server-only APIs (cookies, headers)
+- ❌ NO React hooks (`useState`, `useEffect`)
+- ❌ NO event handlers (`onClick`, `onChange`)
+- ❌ NO browser APIs (`localStorage`, `window`)
+
+#### Client Components (require `'use client'`)
+- ✅ Interactive features and event handlers
+- ✅ React hooks and state management
+- ✅ Browser APIs
+- ❌ NO direct server-only APIs
+
+#### Critical Conversion Checklist
+BEFORE converting any component:
+1. **Audit Dependencies**: Check for hooks, event handlers, browser APIs
+2. **Plan Boundaries**: Identify what needs server vs client rendering
+3. **Split Components**: Create separate server/client components if needed
+4. **Test Gracefully**: Implement fallbacks for missing data/tables
+
+### Database Integration Rules (CRITICAL)
+
+⚠️ **Graceful Degradation**: Always handle missing tables/API failures
+
+```typescript
+// ✅ CORRECT: Graceful fallback pattern
+try {
+  const profile = await supabase.from('users').select('*').single();
+  return profile.data;
+} catch (error) {
+  console.warn('Users table not found, using auth data:', error);
+  return user.user_metadata; // Fallback to auth metadata
+}
+```
+
 ### Middleware Requirements (CRITICAL)
 
 ⚠️ **File Location**: Middleware MUST be placed at `src/middleware.ts` (NOT at root level)

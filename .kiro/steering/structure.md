@@ -71,6 +71,58 @@ src/
 
 ## Key Architectural Patterns
 
+### Server vs Client Component Architecture (CRITICAL)
+
+**BEFORE modifying ANY component, identify its type and dependencies:**
+
+#### Server Components (Default in App Router)
+```
+src/app/*/page.tsx           # All pages are server components by default
+src/components/**/display/   # Static display components
+src/lib/auth-utils.ts        # Server-side utilities
+```
+
+Requirements:
+- ✅ Can use `await` for data fetching
+- ✅ Access to server APIs (cookies, headers)
+- ❌ NO React hooks (`useState`, `useEffect`)
+- ❌ NO event handlers
+- ❌ NO browser APIs
+
+#### Client Components (Require 'use client')
+```
+src/components/**/interactive/  # Interactive components
+src/components/**/forms/        # Form components with state
+src/hooks/                      # All custom hooks
+```
+
+Requirements:
+- ✅ React hooks and state management
+- ✅ Event handlers and interactivity
+- ✅ Browser APIs
+- ❌ NO direct server API access
+
+#### Mixed Component Patterns
+```typescript
+// ✅ CORRECT: Server component with client children
+export default async function ServerPage() {
+  const data = await fetchServerData();
+  return (
+    <div>
+      <StaticDisplay data={data} />           {/* Server component */}
+      <InteractiveSection userData={data} />  {/* Client component */}
+    </div>
+  );
+}
+
+// ✅ Client component for interactions
+'use client';
+export function InteractiveSection({ userData }) {
+  const [state, setState] = useState();
+  return <button onClick={handleClick}>Click me</button>;
+}
+```
+
 ### File Naming Conventions
 
 - **Pages**: `page.tsx` (App Router convention)
