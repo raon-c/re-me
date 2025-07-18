@@ -15,7 +15,11 @@
       "Bash(find:*)",
       "Bash(npm run:*)",
       "Bash(grep:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(touch:*)",
+      "Bash(npx shadcn-ui:*)",
+      "Bash(npx:*)",
+      "Bash(true)"
     ],
     "deny": []
   }
