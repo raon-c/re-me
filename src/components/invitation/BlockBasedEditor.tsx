@@ -8,32 +8,34 @@ import { api } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Block } from '@/types/blocks';
+import type { Template } from '@/types';
 
 interface BlockBasedEditorProps {
   invitationId?: string;
   templateId?: string;
+  template?: Template;
+  isPreviewMode?: boolean;
   className?: string;
 }
 
 export function BlockBasedEditor({
   invitationId,
   templateId,
+  template,
+  isPreviewMode = false,
   className,
 }: BlockBasedEditorProps) {
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [internalPreviewMode, setInternalPreviewMode] = useState(false);
+  const currentPreviewMode = isPreviewMode ?? internalPreviewMode;
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // AIDEV-NOTE: 블록 상태 관리
-  const {
-    blocks,
-    loadBlocks,
-    validateBlocks,
-    isDirty,
-  } = useBlocks(invitationId);
+  const { blocks, loadBlocks, validateBlocks, isDirty } =
+    useBlocks(invitationId);
 
   // AIDEV-NOTE: tRPC queries and mutations
   const utils = api.useUtils();
-  
+
   const { data: invitation, isLoading } = api.invitation.getById.useQuery(
     { id: invitationId! },
     { enabled: !!invitationId }
@@ -56,47 +58,61 @@ export function BlockBasedEditor({
       utils.invitation.getById.invalidate({ id: invitationId! });
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : '저장 중 오류가 발생했습니다.');
+      toast.error(
+        error instanceof Error ? error.message : '저장 중 오류가 발생했습니다.'
+      );
     },
   });
 
   // AIDEV-NOTE: 블록 데이터 저장 핸들러
-  const handleSave = useCallback(async (blocksToSave: Block[]) => {
-    if (!validateBlocks() || isSaving) return;
+  const handleSave = useCallback(
+    async (blocksToSave: Block[]) => {
+      if (!validateBlocks() || isSaving) return;
 
-    setIsSaving(true);
+      setIsSaving(true);
 
-    try {
-      // 블록 데이터를 기존 editorState 형태로 변환
-      const editorState = convertBlocksToEditorState(blocksToSave);
+      try {
+        // 블록 데이터를 기존 editorState 형태로 변환
+        const editorState = convertBlocksToEditorState(blocksToSave);
 
-      if (invitationId) {
-        await updateInvitationMutation.mutateAsync({
-          id: invitationId,
-          editorState,
-        });
-      } else {
-        // 새 초대장 생성
-        const title = extractTitleFromBlocks(blocksToSave);
-        await createInvitationMutation.mutateAsync({
-          title,
-          templateId,
-          editorState,
-        });
+        if (invitationId) {
+          await updateInvitationMutation.mutateAsync({
+            id: invitationId,
+            editorState,
+          });
+        } else {
+          // 새 초대장 생성
+          const title = extractTitleFromBlocks(blocksToSave);
+          await createInvitationMutation.mutateAsync({
+            title,
+            templateId,
+            editorState,
+          });
+        }
+      } catch (error) {
+        console.error('Save error:', error);
+        toast.error('저장 중 오류가 발생했습니다.');
+      } finally {
+        setIsSaving(false);
       }
-    } catch (error) {
-      console.error('Save error:', error);
-      toast.error('저장 중 오류가 발생했습니다.');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [invitationId, templateId, validateBlocks, isSaving, updateInvitationMutation, createInvitationMutation]);
+    },
+    [
+      invitationId,
+      templateId,
+      validateBlocks,
+      isSaving,
+      updateInvitationMutation,
+      createInvitationMutation,
+    ]
+  );
 
   // AIDEV-NOTE: 기존 초대장 데이터를 블록 형태로 변환하여 로드
   useEffect(() => {
     if (invitation && invitation.editorState) {
       // 기존 editorState를 블록 형태로 변환
-      const convertedBlocks = convertEditorStateToBlocks(invitation.editorState);
+      const convertedBlocks = convertEditorStateToBlocks(
+        invitation.editorState
+      );
       loadBlocks(convertedBlocks);
     }
   }, [invitation, loadBlocks]);
@@ -114,8 +130,49 @@ export function BlockBasedEditor({
 
   // AIDEV-NOTE: 미리보기 모드 토글
   const handlePreviewToggle = useCallback((isPreview: boolean) => {
-    setIsPreviewMode(isPreview);
+    setInternalPreviewMode(isPreview);
   }, []);
+
+  // Template이 제공된 경우 간단한 렌더링
+  if (template) {
+    return (
+      <div className={cn('w-full h-full', className)}>
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="text-center space-y-4">
+            <div className="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
+              <div className="text-gray-600 text-center">
+                <svg
+                  className="w-16 h-16 mx-auto mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                <h3 className="text-lg font-medium mb-2">{template.name}</h3>
+                <p className="text-sm text-gray-500">
+                  블록 기반 에디터로 편집할 수 있습니다
+                </p>
+                <div className="mt-4 text-xs text-gray-400">
+                  {getCategoryLabel(template.category)} 템플릿
+                </div>
+              </div>
+            </div>
+            {currentPreviewMode && (
+              <div className="text-sm text-blue-600 font-medium">
+                미리보기 모드
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading && invitationId) {
     return (
@@ -133,12 +190,30 @@ export function BlockBasedEditor({
       <BlockEditor
         invitationId={invitationId}
         initialBlocks={blocks}
-        isPreviewMode={isPreviewMode}
+        isPreviewMode={currentPreviewMode}
         onSave={handleSave}
         onPreviewToggle={handlePreviewToggle}
       />
     </div>
   );
+}
+
+/**
+ * Get category label in Korean
+ */
+function getCategoryLabel(category: string): string {
+  switch (category) {
+    case 'classic':
+      return '클래식';
+    case 'modern':
+      return '모던';
+    case 'romantic':
+      return '로맨틱';
+    case 'minimal':
+      return '미니멀';
+    default:
+      return '기타';
+  }
 }
 
 // AIDEV-NOTE: 기존 editorState를 블록 배열로 변환
@@ -206,16 +281,24 @@ function convertEditorStateToBlocks(editorState: any): Block[] {
         data: {
           title: '연락처',
           contacts: [
-            ...(weddingInfo.groomContact ? [{
-              name: weddingInfo.groomName || '신랑',
-              relation: '신랑',
-              phone: weddingInfo.groomContact,
-            }] : []),
-            ...(weddingInfo.brideContact ? [{
-              name: weddingInfo.brideName || '신부',
-              relation: '신부',
-              phone: weddingInfo.brideContact,
-            }] : []),
+            ...(weddingInfo.groomContact
+              ? [
+                  {
+                    name: weddingInfo.groomName || '신랑',
+                    relation: '신랑',
+                    phone: weddingInfo.groomContact,
+                  },
+                ]
+              : []),
+            ...(weddingInfo.brideContact
+              ? [
+                  {
+                    name: weddingInfo.brideName || '신부',
+                    relation: '신부',
+                    phone: weddingInfo.brideContact,
+                  },
+                ]
+              : []),
           ],
         },
         styles: {
@@ -269,7 +352,8 @@ function convertEditorStateToBlocks(editorState: any): Block[] {
           styles: {
             textAlign: element.style?.textAlign || 'center',
             fontSize: element.style?.fontSize === '18px' ? 'large' : 'medium',
-            fontWeight: element.style?.fontWeight === 'bold' ? 'bold' : 'normal',
+            fontWeight:
+              element.style?.fontWeight === 'bold' ? 'bold' : 'normal',
             textColor: element.style?.color || undefined,
             padding: 'medium',
             margin: 'medium',
@@ -317,7 +401,7 @@ function convertBlocksToEditorState(blocks: Block[]): any {
           weddingTime: block.data.weddingTime,
         };
         break;
-      
+
       case 'location':
         weddingInfo = {
           ...weddingInfo,
@@ -328,7 +412,7 @@ function convertBlocksToEditorState(blocks: Block[]): any {
           transportInfo: block.data.transportInfo,
         };
         break;
-      
+
       case 'contact':
         const contacts = block.data.contacts || [];
         contacts.forEach((contact: any) => {
@@ -339,7 +423,7 @@ function convertBlocksToEditorState(blocks: Block[]): any {
           }
         });
         break;
-      
+
       case 'rsvp':
         weddingInfo = {
           ...weddingInfo,
@@ -347,13 +431,13 @@ function convertBlocksToEditorState(blocks: Block[]): any {
           rsvpDeadline: block.data.dueDate,
         };
         break;
-      
+
       case 'content':
         elements.push({
           id: block.id,
           type: 'text',
           content: block.data.content,
-          position: { x: 50, y: 50 + (block.order * 100) },
+          position: { x: 50, y: 50 + block.order * 100 },
           size: { width: 200, height: 50 },
           style: {
             fontSize: block.styles?.fontSize === 'large' ? '18px' : '14px',
@@ -364,13 +448,13 @@ function convertBlocksToEditorState(blocks: Block[]): any {
           },
         });
         break;
-      
+
       case 'image':
         elements.push({
           id: block.id,
           type: 'image',
           content: block.data.imageUrl,
-          position: { x: 50, y: 50 + (block.order * 150) },
+          position: { x: 50, y: 50 + block.order * 150 },
           size: { width: 200, height: 150 },
           style: {},
         });
@@ -386,7 +470,7 @@ function convertBlocksToEditorState(blocks: Block[]): any {
 
 // AIDEV-NOTE: 블록에서 제목 추출
 function extractTitleFromBlocks(blocks: Block[]): string {
-  const headerBlock = blocks.find(block => block.type === 'header');
+  const headerBlock = blocks.find((block) => block.type === 'header');
   if (headerBlock) {
     const { brideName, groomName } = headerBlock.data;
     if (brideName && groomName) {

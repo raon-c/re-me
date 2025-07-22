@@ -14,6 +14,7 @@ import type { Template, TemplateCategory } from '@/types';
 interface TemplateSelectorProps {
   selectedTemplateId?: string;
   onTemplateSelect?: (template: Template) => void;
+  onCreateInvitation?: (template: Template) => void;
   className?: string;
 }
 
@@ -28,6 +29,7 @@ const CATEGORY_FILTERS: { value: TemplateCategory | 'all'; label: string }[] = [
 export function TemplateSelector({
   selectedTemplateId,
   onTemplateSelect,
+  onCreateInvitation,
   className,
 }: TemplateSelectorProps) {
   const [selectedCategory, setSelectedCategory] = useState<
@@ -163,6 +165,7 @@ export function TemplateSelector({
                   isSelected={selectedTemplateId === template.id}
                   onSelect={handleTemplateSelect}
                   onPreview={handleTemplatePreview}
+                  onCreateInvitation={onCreateInvitation}
                 />
               ))}
             </div>

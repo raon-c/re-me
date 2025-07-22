@@ -11,9 +11,7 @@ import {
   updateTemplateSchema,
   templateRenderDataSchema,
 } from '@/lib/validations';
-import type {
-  TemplateRenderDataInput,
-} from '@/lib/validations';
+import type { TemplateRenderDataInput } from '@/lib/validations';
 
 // AIDEV-NOTE: Template tRPC router with rendering engine and Korean UX
 
