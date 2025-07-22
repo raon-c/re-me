@@ -1,20 +1,15 @@
 'use client';
 
-// AIDEV-NOTE: 이미지 업로드 훅 - 파일 업로드 및 상태 관리
+// AIDEV-NOTE: 이미지 업로드 훅 - Safe Actions를 사용한 파일 업로드 및 상태 관리
 import { useState, useCallback } from 'react';
-import { api } from '@/lib/trpc';
+import { uploadImageAction, deleteImageAction } from '@/actions/safe-upload-actions';
 
 export interface UploadedImage {
-  id: string;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
-  fileType: string;
-  publicUrl: string;
-  alt?: string;
-  caption?: string;
-  uploadedAt: string;
-  uploadedBy: string;
+  url: string;
+  path: string;
+  originalName: string;
+  size: number;
+  type: string;
 }
 
 export interface UploadError {
@@ -37,16 +32,11 @@ export function useImageUpload() {
     uploadedImage: null,
   });
 
-  const getUploadUrlMutation = api.upload.getUploadUrl.useMutation();
-  const confirmUploadMutation = api.upload.confirmUpload.useMutation();
-  const deleteImageMutation = api.upload.deleteImage.useMutation();
-
   // AIDEV-NOTE: 파일 업로드 메인 함수
   const uploadImage = useCallback(async (
     file: File,
+    folder: 'invitations' | 'templates' | 'avatars' = 'invitations',
     options?: {
-      alt?: string;
-      caption?: string;
       onProgress?: (progress: number) => void;
     }
   ): Promise<UploadedImage | null> => {
@@ -70,44 +60,24 @@ export function useImageUpload() {
         throw new Error('이미지 파일만 업로드할 수 있습니다.');
       }
 
-      // AIDEV-NOTE: 1단계 - 업로드 URL 요청
-      const uploadUrlResponse = await getUploadUrlMutation.mutateAsync({
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-      });
+      // 진행률 업데이트
+      setUploadState(prev => ({ ...prev, progress: 10 }));
+      options?.onProgress?.(10);
 
-      setUploadState(prev => ({ ...prev, progress: 20 }));
-      options?.onProgress?.(20);
+      // Safe Action을 통한 이미지 업로드
+      const result = await uploadImageAction({ file, folder });
 
-      // AIDEV-NOTE: 2단계 - 실제 파일 업로드 (임시로 로컬 URL 사용)
-      // 실제 구현에서는 Supabase Storage에 업로드
-      const uploadPromise = new Promise<void>((resolve) => {
-        // AIDEV-NOTE: 진행률 시뮬레이션
-        let progress = 20;
-        const interval = setInterval(() => {
-          progress += 20;
-          setUploadState(prev => ({ ...prev, progress }));
-          options?.onProgress?.(progress);
-          
-          if (progress >= 80) {
-            clearInterval(interval);
-            resolve();
-          }
-        }, 200);
-      });
+      if (!result?.data) {
+        throw new Error(result?.serverError || '업로드에 실패했습니다.');
+      }
 
-      await uploadPromise;
-
-      // AIDEV-NOTE: 3단계 - 업로드 완료 확인
-      const uploadedImage = await confirmUploadMutation.mutateAsync({
-        filePath: uploadUrlResponse.filePath,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        alt: options?.alt,
-        caption: options?.caption,
-      });
+      const uploadedImage: UploadedImage = {
+        url: result.data.url,
+        path: result.data.path,
+        originalName: result.data.originalName,
+        size: result.data.size,
+        type: result.data.type,
+      };
 
       setUploadState({
         isUploading: false,
@@ -132,18 +102,23 @@ export function useImageUpload() {
       console.error('이미지 업로드 실패:', error);
       return null;
     }
-  }, [getUploadUrlMutation, confirmUploadMutation]);
+  }, []);
 
   // AIDEV-NOTE: 이미지 삭제 함수
   const deleteImage = useCallback(async (filePath: string): Promise<boolean> => {
     try {
-      await deleteImageMutation.mutateAsync({ filePath });
+      const result = await deleteImageAction({ filePath });
+      
+      if (!result?.data) {
+        throw new Error(result?.serverError || '삭제에 실패했습니다.');
+      }
+
       return true;
     } catch (error) {
       console.error('이미지 삭제 실패:', error);
       return false;
     }
-  }, [deleteImageMutation]);
+  }, []);
 
   // AIDEV-NOTE: 상태 초기화 함수
   const resetUploadState = useCallback(() => {
@@ -191,10 +166,5 @@ export function useImageUpload() {
     formatFileSize,
     createPreviewUrl,
     revokePreviewUrl,
-    
-    // 뮤테이션 상태
-    isGettingUploadUrl: getUploadUrlMutation.isPending,
-    isConfirmingUpload: confirmUploadMutation.isPending,
-    isDeletingImage: deleteImageMutation.isPending,
   };
 }

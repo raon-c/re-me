@@ -5,7 +5,9 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { Template } from '@/types';
+import type { Database } from '@/types/database';
+
+type Template = Database['public']['Tables']['templates']['Row'];
 
 // AIDEV-NOTE: Template card component with Korean UX and mobile-responsive design
 
@@ -59,7 +61,7 @@ export function TemplateCard({
         <div className="relative aspect-[3/4] overflow-hidden rounded-t-lg">
           {!imageError ? (
             <Image
-              src={template.previewImageUrl}
+              src={template.preview_image_url}
               alt={`${template.name} 템플릿 미리보기`}
               fill
               className="object-cover transition-transform duration-200 group-hover:scale-110"

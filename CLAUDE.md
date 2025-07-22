@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-_Last updated 2025-07-18_
+_Last updated 2025-07-22_
 
 > **Purpose** – This file is the onboarding manual for every AI assistant (Claude, Cursor, GPT, etc.) and every human who edits this repository.  
 > It encodes our coding standards, guard-rails, and workflow practices so the _human decision-making_ (architecture, business logic, UX) stays in human hands.
@@ -29,7 +29,7 @@ _Last updated 2025-07-18_
 | #   | AI _may_ do                                                                                                                     | AI _must NOT_ do                                                                                     |
 | --- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | G-0 | Ask for clarification when unsure about project-specific features, business logic, or UX decisions.                             | ❌ Make assumptions about user requirements or business logic without confirmation.                  |
-| G-1 | Generate code **only inside** relevant source directories (`src/`, `prisma/`, `supabase/`) or explicitly specified files.       | ❌ Touch `.kiro/` directory, test files, or any specification documents without explicit permission. |
+| G-1 | Generate code **only inside** relevant source directories (`src/`, `supabase/`) or explicitly specified files.       | ❌ Touch `.kiro/` directory, test files, or any specification documents without explicit permission. |
 | G-2 | Add/update **`AIDEV-NOTE:` anchor comments** near non-trivial edited code.                                                      | ❌ Delete or modify existing `AIDEV-` comments without explicit instruction.                         |
 | G-3 | Follow lint/style configs (`eslint`, `prettier`, `typescript`). Use `npm run lint:fix` and `npm run type-check` before commits. | ❌ Reformat code to any other style or ignore TypeScript errors.                                     |
 | G-4 | For changes >300 LOC or >3 files, **ask for confirmation** before proceeding.                                                   | ❌ Refactor large modules or change core architecture without human guidance.                        |
@@ -54,11 +54,9 @@ npm run lint             # Run ESLint
 npm run lint:fix         # Run ESLint with auto-fix
 npm run type-check       # Run TypeScript type checking
 
-# Database operations
-npm run db:generate      # Generate Prisma client
-npm run db:push          # Push schema changes to database
-npm run db:reset         # Reset database and run migrations
-npm run db:seed          # Seed database with initial data
+# Database operations (Supabase)
+# Note: Database operations are managed directly through Supabase Dashboard
+# or Supabase CLI for schema changes and migrations
 
 # Testing
 npm run test             # Run tests
@@ -87,23 +85,27 @@ npm run test:coverage    # Run tests with coverage report
 **Error handling patterns**:
 
 ```typescript
-// Use typed errors with proper user feedback
-import { TRPCError } from '@trpc/server';
-
-export const createInvitation = async (input: CreateInvitationInput) => {
-  try {
-    // Process invitation
-    return result;
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: '입력하신 정보를 다시 확인해 주세요.',
-      });
+// Use typed errors with proper user feedback in Safe Actions
+export const createInvitationAction = authActionClient
+  .schema(createInvitationSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    try {
+      // Process invitation with validated input
+      const invitation = await ctx.supabase
+        .from('invitations')
+        .insert(parsedInput)
+        .select()
+        .single();
+      
+      return {
+        message: '청첩장이 성공적으로 생성되었습니다.',
+        invitation: invitation.data,
+      };
+    } catch (error) {
+      // Safe Action automatically handles error responses
+      throw new Error('청첩장 생성 중 오류가 발생했습니다.');
     }
-    throw error;
-  }
-};
+  });
 ```
 
 ---
@@ -120,19 +122,19 @@ export const createInvitation = async (input: CreateInvitationInput) => {
 
 ### API & State Management
 
-- **tRPC 10+** for type-safe API communication
-- **TanStack Query 4+** for server state management (integrated with tRPC)
-- **Zod** for schema validation
+- **Next-Safe-Action 8+** for type-safe server actions with enhanced security
+- **Zod** for schema validation and input/output type safety
 - **React Hook Form 7.0+** for form management
+- **Direct Supabase Client** for real-time data and optimistic updates
 
 ### Backend Services
 
 - **Supabase** as Backend-as-a-Service
-  - PostgreSQL database
+  - PostgreSQL database with Row Level Security (RLS)
   - Authentication (JWT + OAuth)
-  - File storage
+  - File storage with bucket policies
   - Real-time subscriptions
-- **Prisma 5.0+** as ORM (Supabase integration)
+  - Direct SQL access with type-safe client
 
 ### External Services
 
@@ -148,7 +150,7 @@ export const createInvitation = async (input: CreateInvitationInput) => {
 
 ```
 src/
-├── app/                          # Next.js 14 App Router
+├── app/                          # Next.js 15 App Router
 │   ├── (auth)/                   # Route groups for auth pages
 │   │   ├── login/page.tsx        # ✅ 로그인 페이지 완료
 │   │   └── signup/page.tsx       # ✅ 회원가입 페이지 완료
@@ -162,8 +164,6 @@ src/
 │   ├── invitation/
 │   │   ├── create/page.tsx       # 🚧 청첩장 생성 (계획됨)
 │   │   └── [code]/page.tsx       # 🚧 공개 청첩장 보기 (계획됨)
-│   ├── api/
-│   │   └── trpc/[trpc]/route.ts  # ✅ tRPC API 핸들러 완료
 │   ├── layout.tsx                # ✅ 루트 레이아웃 완료
 │   ├── page.tsx                  # ✅ 랜딩 페이지 완료
 │   ├── loading.tsx               # ✅ 글로벌 로딩 UI 완료
@@ -197,26 +197,21 @@ src/
 │   │   ├── TemplateSelector.tsx
 │   │   ├── BlockBasedEditor.tsx  # 블록 기반 에디터 통합
 │   │   └── InvitationEditor.tsx  # 메인 에디터 컴포넌트
-│   ├── providers/                # ✅ 프로바이더 컴포넌트 완료
-│   │   └── trpc-provider.tsx
 │   ├── rsvp/                     # 🚧 RSVP 컴포넌트 (계획됨)
 │   └── dashboard/                # 🚧 대시보드 컴포넌트 (계획됨)
-├── server/                       # ✅ tRPC 서버 코드 완료
-│   ├── api/
-│   │   ├── routers/              # tRPC 라우터
-│   │   │   ├── auth.ts           # ✅ 인증 라우터 완료
-│   │   │   └── template.ts       # ✅ 템플릿 라우터 완료
-│   │   ├── root.ts               # ✅ 루트 라우터 완료
-│   │   └── trpc.ts               # ✅ tRPC 설정 완료
-│   └── db/
-│       └── index.ts              # ✅ 데이터베이스 클라이언트 완료
+├── actions/                      # ✅ Next-Safe-Action 서버 액션 완료
+│   ├── safe-auth-actions.ts      # ✅ 인증 관련 Safe Actions (10개)
+│   ├── safe-template-actions.ts  # ✅ 템플릿 관련 Safe Actions (8개)
+│   ├── safe-invitation-actions.ts # ✅ 청첩장 관련 Safe Actions (8개)
+│   ├── safe-upload-actions.ts    # ✅ 파일 업로드 Safe Actions (4개)
+│   └── safe-rsvp-actions.ts      # ✅ RSVP 관련 Safe Actions (6개)
 ├── lib/                          # ✅ 유틸리티 라이브러리 완료
 │   ├── supabase/
 │   │   ├── client.ts             # ✅ Supabase 클라이언트 설정
 │   │   └── server.ts             # ✅ Supabase 서버 설정
 │   ├── blocks/                   # ✅ 블록 시스템 유틸리티 완료
 │   │   └── block-factory.ts      # 블록 생성 및 관리 팩토리
-│   ├── trpc.ts                   # ✅ tRPC 클라이언트 설정
+│   ├── safe-action.ts            # ✅ Safe Action 클라이언트 설정
 │   ├── utils.ts                  # ✅ 일반 유틸리티
 │   └── validations.ts            # ✅ Zod 검증 스키마
 ├── hooks/                        # ✅ 커스텀 React 훅 완료
@@ -247,21 +242,22 @@ This is a mobile wedding invitation platform with the following core entities:
 - Row Level Security (RLS) policies for data access control
 - Supabase Storage integration for invitation images
 - Comprehensive indexing for performance
-- Dual database setup: Prisma for type-safe queries, Supabase for auth and RLS
+- Direct Supabase client with generated TypeScript types for full type safety
 
-### tRPC API Structure
+### Safe Action API Structure
 
-- **Authentication Router**: ✅ User registration, login, logout, session management (완료)
-- **Template Router**: ✅ Template catalog with category-based filtering (완료)
-- **Invitation Router**: 🚧 CRUD operations for invitations, image uploads, public access (계획됨)
-- **RSVP Router**: 🚧 Guest response submission, statistics, data export (계획됨)
+- **Authentication Actions**: ✅ User registration, login, logout, session management (완료)
+- **Template Actions**: ✅ Template catalog with category-based filtering (완료)
+- **Invitation Actions**: ✅ CRUD operations for invitations, image uploads, public access (완료)
+- **Upload Actions**: ✅ File upload with Supabase Storage integration (완료)
+- **RSVP Actions**: ✅ Guest response submission, statistics, data export (완료)
 
 ### Authentication Flow
 
 - ✅ Supabase Auth with email/password and OAuth providers (Google, Kakao) - 완료
 - ✅ Custom `useAuth` hook provides authentication state and methods - 완료
 - ✅ RLS policies ensure users can only access their own data - 완료
-- 🚧 Public access to invitations via unique 8-character invitation codes - 계획됨
+- ✅ Public access to invitations via unique 8-character invitation codes - 완료
 
 ### UI Components
 
@@ -329,7 +325,7 @@ const initializeMap = async () => {
 
 ### State Management
 
-- **Server State**: Managed by TanStack Query + tRPC
+- **Server State**: Managed by Next-Safe-Action with automatic error handling
 - **Client State**: React state and context for UI state
 - **Form State**: React Hook Form for complex forms
 - **Authentication State**: Supabase Auth with custom hooks
@@ -350,17 +346,17 @@ const initializeMap = async () => {
    - TypeScript, Tailwind CSS, ESLint, Prettier 설정
    - Shadcn/ui 컴포넌트 라이브러리 설치 및 설정
    - Supabase 프로젝트 설정 및 데이터베이스 스키마 구현
-   - tRPC 서버/클라이언트 설정 완료
+   - Next-Safe-Action 설정 완료
 
 2. **Authentication System** (Task 4)
    - Supabase Auth 설정 (이메일/비밀번호, Google/Kakao OAuth)
-   - 인증 tRPC 라우터 구현 완료
+   - 인증 Safe Actions 구현 완료
    - 로그인/회원가입 UI 컴포넌트 구현
    - 사용자 프로필 관리 기능
    - OAuth 콜백 처리 및 비밀번호 재설정
 
 3. **Template System** (Task 5)
-   - 템플릿 데이터 모델 및 tRPC 라우터 구현
+   - 템플릿 데이터 모델 및 Safe Actions 구현
    - 템플릿 카테고리별 필터링 및 조회 기능
    - 템플릿 선택 UI 및 미리보기 컴포넌트
    - 15개 기본 템플릿 데이터 생성
@@ -373,17 +369,21 @@ const initializeMap = async () => {
    - DND 방식 대신 블록 기반 접근 방식 채택
    - TypeScript 타입 안전성 보장 및 React Hook 순서 일관성 확보
 
+5. **Safe Action Architecture Migration** - ✅ 완료
+   - tRPC/Prisma 제거 및 Next-Safe-Action 8+ 도입
+   - 36개 Safe Actions 구현 (인증, 템플릿, 청첩장, 업로드, RSVP)
+   - 타입 안전성 강화 및 보안 향상
+   - 미들웨어 기반 인증 및 로깅 시스템
+
 ### 🚧 Next Implementation Steps
 
 1. **Wedding Information Forms** (Task 7) - 결혼식 정보 입력
-2. **Invitation CRUD** (Task 8) - 청첩장 관리 기능
+2. **Invitation CRUD UI** (Task 8) - 청첩장 관리 인터페이스
 3. **Sharing Features** (Task 9) - 공유 및 공개 조회
-4. **RSVP System** (Task 10) - 참석 응답 시스템
+4. **RSVP System UI** (Task 10) - 참석 응답 인터페이스
 
 ### Environment Variables Required
 
-- ✅ `DATABASE_URL` - PostgreSQL connection string
-- ✅ `DIRECT_URL` - Direct database connection for migrations
 - ✅ `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
 - ✅ `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
 - ✅ `SUPABASE_SERVICE_ROLE_KEY` - Server-side Supabase operations
@@ -392,18 +392,18 @@ const initializeMap = async () => {
 
 - ✅ RLS policies implemented for all tables - 완료
 - ✅ CORS headers configured in next.config.js - 완료
-- 🚧 Storage bucket policies for image uploads - 계획됨
-- 🚧 Invitation codes for secure guest access - 계획됨
+- ✅ Storage bucket policies for image uploads - 완료
+- ✅ Invitation codes for secure guest access - 완료
 - ✅ HTTPS enforcement and XSS prevention - 완료
 
 ### Development Workflow
 
-1. ✅ Database changes should be made in both Prisma schema and Supabase SQL - 완료
-2. ✅ Run `npm run db:generate` after schema changes - 완료
-3. ✅ Use `npm run db:push` to apply changes to development database - 완료
-4. ✅ Always run `npm run type-check` and `npm run lint` before commits - 완료
-5. ✅ Follow mobile-first responsive design principles - 진행 중
-6. ✅ Implement proper error handling and loading states - 진행 중
+1. ✅ Database changes should be made through Supabase Dashboard or CLI - 완료
+2. ✅ Generate TypeScript types with `supabase gen types typescript` - 완료
+3. ✅ Always run `npm run type-check` and `npm run lint` before commits - 완료
+4. ✅ Follow mobile-first responsive design principles - 진행 중
+5. ✅ Implement proper error handling and loading states - 진행 중
+6. ✅ Use Safe Actions for all server-side operations - 완료
 
 ### Testing Strategy
 
@@ -471,7 +471,7 @@ export function ClientInteractiveHeader({ userData }: { userData: UserData }) {
 ### Data Flow Patterns
 
 1. **Server → Client**: Pass server data as props
-2. **Client → Server**: Use server actions or API routes
+2. **Client → Server**: Use Safe Actions
 3. **Mixed Components**: Server components can render client components, but not vice versa
 
 ### Database Integration Rules
@@ -498,7 +498,37 @@ try {
 
 ---
 
-## 9. Next.js 15 Critical Guidelines
+## 9. Safe Action Development Checklist (MANDATORY)
+
+**BEFORE creating or modifying ANY Safe Action, complete this checklist:**
+
+#### 1. Identify Action Type
+- [ ] Is this a public action? Use `actionClient`
+- [ ] Does it require authentication? Use `authActionClient`
+- [ ] Does it need admin permissions? Use `adminActionClient`
+- [ ] Does it need rate limiting? Use `rateLimitedActionClient`
+
+#### 2. Define Validation Schema
+- [ ] Create Zod schema for input validation
+- [ ] Include Korean error messages
+- [ ] Test edge cases and validation boundaries
+- [ ] Ensure type safety with TypeScript
+
+#### 3. Implement Action Logic
+- [ ] Use proper error handling with try/catch
+- [ ] Implement graceful fallbacks for missing data
+- [ ] Add user-friendly Korean error messages
+- [ ] Use `revalidatePath()` for cache invalidation
+
+#### 4. Test Action Integration
+- [ ] Test with valid inputs
+- [ ] Test with invalid inputs and edge cases
+- [ ] Verify authentication and authorization
+- [ ] Check database permissions and RLS policies
+
+---
+
+## 10. Next.js 15 Critical Guidelines
 
 ### Middleware Requirements (CRITICAL)
 
@@ -537,7 +567,7 @@ export const config = {
 
 ---
 
-## 9. Commit discipline
+## 11. Commit discipline
 
 - **Granular commits**: One logical change per commit
 - **Tag AI-generated commits**: e.g., `feat: add RSVP form validation [AI]`
@@ -560,7 +590,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 10. Domain-specific terminology
+## 12. Domain-specific terminology
 
 - **청첩장 (Invitation)**: Digital wedding invitation with customizable templates
 - **템플릿 (Template)**: Pre-designed invitation layouts with themes (Classic, Modern, Romantic, Minimal)
@@ -577,22 +607,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 11. Key File & Pattern References
+## 13. Key File & Pattern References
 
 ### Important Files
 
-- **API Route Definitions**: `src/server/api/routers/` (✅ auth.ts, ✅ template.ts, 🚧 invitation.ts, 🚧 rsvp.ts)
-- **Database Schema**: ✅ `prisma/schema.prisma` and ✅ `supabase/migrations/`
+- **Safe Action Definitions**: `src/actions/` (✅ safe-auth-actions.ts, ✅ safe-template-actions.ts, ✅ safe-invitation-actions.ts, ✅ safe-upload-actions.ts, ✅ safe-rsvp-actions.ts)
+- **Database Schema**: ✅ `supabase/migrations/` and generated types
 - **Authentication Hook**: ✅ `src/hooks/useAuth.ts`
-- **Database Client**: ✅ `src/lib/db/index.ts`
+- **Safe Action Client**: ✅ `src/lib/safe-action.ts`
 - **Supabase Client**: ✅ `src/lib/supabase/client.ts` and ✅ `src/lib/supabase/server.ts`
 - **Type Definitions**: ✅ `src/types/` (auth.ts, database.ts, index.ts)
+- **Validation Schemas**: ✅ `src/lib/validations.ts`
 - **⚠️ Middleware**: ✅ `src/middleware.ts` (CRITICAL: Must be in src/ directory for Next.js 15)
 
 ### Common Patterns
 
-- **tRPC Procedures**: Type-safe API endpoints with input validation
-- **Prisma Queries**: Type-safe database operations with proper error handling
+- **Safe Actions**: Type-safe server actions with automatic validation and error handling
+- **Supabase Queries**: Direct database operations with generated TypeScript types
 - **Supabase Auth**: JWT-based authentication with RLS policies
 - **Form Validation**: Zod schemas with React Hook Form
 - **Error Handling**: Typed errors with Korean user-friendly messages
@@ -600,7 +631,85 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## 12. AI Assistant Workflow
+## 14. Next-Safe-Action Guidelines (CRITICAL)
+
+### Safe Action Architecture Rules
+
+**MUST FOLLOW**: All server-side operations must use Safe Actions:
+
+1. **Safe Action Structure**:
+   ```typescript
+   export const exampleAction = authActionClient
+     .schema(validationSchema)
+     .action(async ({ parsedInput, ctx }) => {
+       // Access validated input and authenticated context
+       const { user, supabase } = ctx;
+       const { data } = parsedInput;
+       
+       // Perform database operations
+       const result = await supabase.from('table').insert(data);
+       
+       return {
+         message: '성공적으로 처리되었습니다.',
+         data: result.data,
+       };
+     });
+   ```
+
+2. **Client Types**:
+   - `actionClient`: Basic client for public actions
+   - `authActionClient`: Requires authentication middleware
+   - `adminActionClient`: Requires admin permissions
+   - `rateLimitedActionClient`: With rate limiting
+
+3. **Error Handling**: Safe Actions automatically handle validation and server errors
+4. **Type Safety**: Full TypeScript support with Zod schemas
+5. **Middleware**: Built-in authentication, logging, and security
+
+### Safe Action Usage Patterns
+
+**Form Handling**:
+```typescript
+// In components
+const result = await loginAction({ email, password });
+if (result?.data) {
+  // Success - redirect or update UI
+} else {
+  // Handle errors automatically provided
+  console.error(result?.serverError);
+}
+```
+
+**With Custom Hooks**:
+```typescript
+const { execute, isLoading, error } = useSafeAction(uploadImageAction);
+await execute({ file, folder: 'invitations' });
+```
+
+### Migration from tRPC Pattern
+
+**OLD (tRPC)**:
+```typescript
+const { data, error } = api.auth.login.useMutation();
+await mutate({ email, password });
+```
+
+**NEW (Safe Actions)**:
+```typescript
+const result = await loginAction({ email, password });
+```
+
+### Critical Safe Action Rules
+
+1. **Never use fetch() or axios** - Always use Safe Actions for server communication
+2. **Always validate input** - Use Zod schemas for all action inputs
+3. **Handle authentication** - Use `authActionClient` for protected actions
+4. **Provide Korean error messages** - All user-facing errors in Korean
+5. **Use revalidatePath()** - Invalidate Next.js cache after mutations
+
+---
+
+## 15. AI Assistant Workflow
 
 When responding to user instructions, follow this process:
 
@@ -653,7 +762,7 @@ When responding to user instructions, follow this process:
 
 ---
 
-## 13. Files to NOT modify
+## 16. Files to NOT modify
 
 - **`.kiro/`**: Project specifications and requirements (human-owned)
 - **`node_modules/`**: Package dependencies

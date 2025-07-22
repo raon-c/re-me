@@ -13,8 +13,6 @@ src/
 │   │   └── reset-password/page.tsx
 │   ├── dashboard/                # User dashboard
 │   │   └── page.tsx
-│   ├── api/                      # API routes
-│   │   └── trpc/[trpc]/route.ts  # tRPC API handler
 │   ├── templates/                # Templates page
 │   │   └── page.tsx
 │   ├── layout.tsx                # Root layout with providers
@@ -51,23 +49,20 @@ src/
 │   │   ├── TemplateSelector.tsx
 │   │   ├── BlockBasedEditor.tsx  # ✅ Block-based editor integration
 │   │   └── InvitationEditor.tsx  # ✅ Main editor component
-│   └── providers/                # Provider components
-│       └── trpc-provider.tsx
-├── server/                       # tRPC server code
-│   └── api/
-│       ├── routers/              # tRPC routers
-│       ├── root.ts               # Root router
-│       └── trpc.ts               # tRPC configuration
+├── actions/                      # ✅ Next-Safe-Action server actions
+│   ├── safe-auth-actions.ts      # Authentication actions (10개)
+│   ├── safe-template-actions.ts  # Template actions (8개)
+│   ├── safe-invitation-actions.ts # Invitation actions (8개)
+│   ├── safe-upload-actions.ts    # File upload actions (4개)
+│   └── safe-rsvp-actions.ts      # RSVP actions (6개)
 ├── lib/                          # Utility libraries
-│   ├── db.ts                     # Database client
-│   ├── server-api.ts             # Server API utilities
+│   ├── safe-action.ts            # ✅ Safe Action client configuration
 │   ├── supabase/                 # Supabase utilities
 │   │   ├── client.ts             # Supabase client
 │   │   ├── server.ts             # Supabase server
 │   │   └── utils.ts              # Supabase utilities
 │   ├── blocks/                   # ✅ Block system utilities
 │   │   └── block-factory.ts      # Block creation and management factory
-│   ├── trpc.ts                   # tRPC client configuration
 │   ├── utils.ts                  # General utilities
 │   └── validations.ts            # Zod validation schemas
 ├── hooks/                        # Custom React hooks
@@ -156,16 +151,16 @@ export function InteractiveSection({ userData }) {
 - **Page Components**: Top-level components that represent routes
 - **Common Components**: Shared across multiple features
 
-### API Structure
+### Safe Action Structure
 
-- **tRPC Routers**: Organized by domain (auth, invitation, rsvp, template)
-- **Procedures**: Type-safe API endpoints with input/output validation
-- **Middleware**: Authentication and authorization logic
-- **Error Handling**: Centralized error handling with proper HTTP status codes
+- **Safe Actions**: Organized by domain (auth, invitation, rsvp, template, upload)
+- **Type Safety**: Automatic input/output validation with Zod schemas
+- **Middleware**: Authentication, authorization, and logging logic
+- **Error Handling**: Centralized error handling with Korean user messages
 
 ### State Management
 
-- **Server State**: Managed by TanStack Query + tRPC
+- **Server State**: Managed by Next-Safe-Action with automatic error handling
 - **Client State**: React state and context for UI state
 - **Form State**: React Hook Form for complex forms
 - **Authentication State**: Supabase Auth with custom hooks

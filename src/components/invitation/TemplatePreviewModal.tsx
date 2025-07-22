@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/trpc';
+import { getTemplateByIdAction } from '@/actions/safe-template-actions';
 import { cn } from '@/lib/utils';
-import type { Template } from '@/types';
+import type { Database } from '@/types/database';
+
+type Template = Database['public']['Tables']['templates']['Row'];
 
 // AIDEV-NOTE: Template preview modal with Korean UX and responsive design
 
@@ -24,12 +26,29 @@ export function TemplatePreviewModal({
   isSelected = false,
 }: TemplatePreviewModalProps) {
   const [isClosing, setIsClosing] = useState(false);
+  const [previewData, setPreviewData] = useState<Template | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch template preview with sample data
-  const { data: previewData, isLoading } = api.template.preview.useQuery(
-    { templateId: template.id },
-    { enabled: isOpen }
-  );
+  // Fetch template preview data when modal opens
+  useEffect(() => {
+    if (isOpen && template?.id) {
+      setIsLoading(true);
+      getTemplateByIdAction({ id: template.id })
+        .then((result) => {
+          if (result?.data) {
+            setPreviewData(result.data);
+          } else {
+            console.error('Failed to load template:', result?.serverError);
+          }
+        })
+        .catch((error) => {
+          console.error('Template preview error:', error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [isOpen, template?.id]);
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -144,17 +163,17 @@ export function TemplatePreviewModal({
                     className="template-preview"
                     style={{
                       fontFamily:
-                        (previewData.cssStyles as Record<string, string> | null)?.fontFamily || 'inherit',
+                        (previewData.css_styles as Record<string, string> | null)?.fontFamily || 'inherit',
                       backgroundColor:
-                        (previewData.cssStyles as Record<string, string> | null)?.backgroundColor ||
+                        (previewData.css_styles as Record<string, string> | null)?.backgroundColor ||
                         '#ffffff',
                       color:
-                        (previewData.cssStyles as Record<string, string> | null)?.primaryColor ||
+                        (previewData.css_styles as Record<string, string> | null)?.primaryColor ||
                         '#000000',
                       minHeight: '400px',
                     }}
                     dangerouslySetInnerHTML={{
-                      __html: previewData.renderedHtml || '',
+                      __html: previewData.html_structure || '',
                     }}
                   />
                 </div>
@@ -183,7 +202,7 @@ export function TemplatePreviewModal({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">생성일:</span>
                     <span>
-                      {new Date(template.createdAt).toLocaleDateString('ko-KR')}
+                      {new Date(template.created_at).toLocaleDateString('ko-KR')}
                     </span>
                   </div>
                 </div>
@@ -199,12 +218,12 @@ export function TemplatePreviewModal({
                         className="w-4 h-4 rounded border"
                         style={{
                           backgroundColor:
-                            (template.cssStyles as Record<string, string> | null)?.primaryColor ||
+                            (template.css_styles as Record<string, string> | null)?.primaryColor ||
                             '#000000',
                         }}
                       />
                       <span className="font-mono text-xs">
-                        {(template.cssStyles as Record<string, string> | null)?.primaryColor || '#000000'}
+                        {(template.css_styles as Record<string, string> | null)?.primaryColor || '#000000'}
                       </span>
                     </div>
                   </div>
@@ -215,46 +234,46 @@ export function TemplatePreviewModal({
                         className="w-4 h-4 rounded border"
                         style={{
                           backgroundColor:
-                            (template.cssStyles as Record<string, string> | null)?.secondaryColor || '#ffffff',
+                            (template.css_styles as Record<string, string> | null)?.secondaryColor || '#ffffff',
                         }}
                       />
                       <span className="font-mono text-xs">
-                        {(template.cssStyles as Record<string, string> | null)?.secondaryColor || '#ffffff'}
+                        {(template.css_styles as Record<string, string> | null)?.secondaryColor || '#ffffff'}
                       </span>
                     </div>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">폰트:</span>
                     <span className="capitalize">
-                      {(template.cssStyles as Record<string, string> | null)?.fontFamily || 'default'}
+                      {(template.css_styles as Record<string, string> | null)?.fontFamily || 'default'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {previewData?.sampleData && (
+              {previewData && (
                 <div>
                   <h3 className="font-semibold mb-3">샘플 데이터</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">신랑:</span>
-                      <span>{previewData.sampleData.groomName}</span>
+                      <span>김민수</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">신부:</span>
-                      <span>{previewData.sampleData.brideName}</span>
+                      <span>이지은</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">날짜:</span>
-                      <span>{previewData.sampleData.weddingDate}</span>
+                      <span>2024-10-15</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">시간:</span>
-                      <span>{previewData.sampleData.weddingTime}</span>
+                      <span>14:00</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">장소:</span>
-                      <span>{previewData.sampleData.venueName}</span>
+                      <span>롯데호텔 서울 크리스탈볼룸</span>
                     </div>
                   </div>
                 </div>

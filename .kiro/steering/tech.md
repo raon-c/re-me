@@ -10,19 +10,19 @@
 
 ## API & State Management
 
-- **tRPC 11+** for type-safe API communication
-- **TanStack Query 5+** for server state management (integrated with tRPC)
-- **Zod 4+** for schema validation
+- **Next-Safe-Action 8+** for type-safe server actions with enhanced security
+- **Zod 4+** for schema validation and input/output type safety
 - **React Hook Form 7.0+** for form management
+- **Direct Supabase Client** for real-time data and optimistic updates
 
 ## Backend Services
 
 - **Supabase** as Backend-as-a-Service
-  - PostgreSQL database
+  - PostgreSQL database with Row Level Security (RLS)
   - Authentication (JWT + OAuth)
-  - File storage
+  - File storage with bucket policies
   - Real-time subscriptions
-- **Prisma 6.0+** as ORM (Supabase integration)
+  - Direct SQL access with type-safe client
 
 ## Deployment & Hosting
 
@@ -130,20 +130,14 @@ npm run lint
 npm run lint:fix
 ```
 
-### Database
+### Database (Supabase)
 
 ```bash
-# Generate Prisma client
-npm run db:generate
+# Generate TypeScript types from Supabase schema
+supabase gen types typescript --project-id YOUR_PROJECT_ID > src/types/database.ts
 
-# Push schema changes
-npm run db:push
-
-# Reset database
-npm run db:reset
-
-# Seed database
-npm run db:seed
+# Database operations are managed through Supabase Dashboard or CLI
+# Schema changes and migrations are handled via Supabase interface
 ```
 
 ### Build & Deploy
@@ -185,8 +179,7 @@ npm run test:coverage
 - ✅ Project setup with Next.js 15, TypeScript, and Tailwind CSS
 - ✅ Shadcn/ui components integration
 - ✅ Supabase setup with authentication
-- ✅ Prisma ORM integration with Supabase
-- ✅ tRPC API setup with TanStack Query
+- ✅ Next-Safe-Action integration with enhanced security
 - ✅ Basic authentication flow (login, signup)
 - ✅ Template system implementation
 - ✅ Middleware authentication control (src/middleware.ts)
@@ -197,8 +190,94 @@ npm run test:coverage
   - ✅ TypeScript 타입 안전성 보장
   - ✅ React Hook 순서 일관성 확보
   - ✅ 기존 DND 방식 제거 및 블록 기반 접근 방식 채택
-- 🔄 Working on RSVP system
+- ✅ Safe Action Architecture Migration 완료
+  - ✅ tRPC/Prisma 제거 및 Next-Safe-Action 8+ 도입
+  - ✅ 36개 Safe Actions 구현 (인증, 템플릿, 청첩장, 업로드, RSVP)
+  - ✅ 타입 안전성 강화 및 보안 향상
+  - ✅ 미들웨어 기반 인증 및 로깅 시스템
+- 🔄 Working on invitation CRUD UI
+- 🔄 Working on RSVP system UI
 - 🔄 Working on dashboard implementation
+
+## Next-Safe-Action Guidelines (CRITICAL)
+
+### 🚨 Safe Action Architecture Rules
+
+⚠️ **All server-side operations MUST use Safe Actions**: Never use fetch() or axios
+
+#### Safe Action Client Types
+```typescript
+// Basic client for public actions
+export const actionClient = createSafeActionClient({ ... });
+
+// Requires authentication middleware  
+export const authActionClient = actionClient.use(async ({ next }) => {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('로그인이 필요합니다.');
+  return next({ ctx: { user, supabase } });
+});
+
+// Admin permissions required
+export const adminActionClient = authActionClient.use(...);
+
+// With rate limiting
+export const rateLimitedActionClient = actionClient.use(...);
+```
+
+#### Safe Action Structure Pattern
+```typescript
+export const exampleAction = authActionClient
+  .schema(validationSchema)  // Zod schema for input validation
+  .action(async ({ parsedInput, ctx }) => {
+    const { user, supabase } = ctx;  // Authenticated context
+    const { data } = parsedInput;    // Validated input
+    
+    try {
+      // Database operation with error handling
+      const result = await supabase.from('table').insert(data);
+      
+      // Cache invalidation
+      revalidatePath('/relevant-path');
+      
+      return {
+        message: '성공적으로 처리되었습니다.',
+        data: result.data,
+      };
+    } catch (error) {
+      throw new Error('처리 중 오류가 발생했습니다.');
+    }
+  });
+```
+
+#### Critical Safe Action Rules
+1. **Authentication**: Use `authActionClient` for protected actions
+2. **Validation**: Always define Zod schemas with Korean error messages
+3. **Error Handling**: Provide user-friendly Korean error messages
+4. **Cache Management**: Use `revalidatePath()` after mutations
+5. **Type Safety**: Full TypeScript support with automatic type inference
+
+#### Usage in Components
+```typescript
+// Direct usage
+const result = await loginAction({ email, password });
+if (result?.data) {
+  // Success handling
+} else {
+  console.error(result?.serverError);
+}
+
+// With custom hooks
+const { execute, isLoading, error } = useSafeAction(uploadImageAction);
+await execute({ file, folder: 'invitations' });
+```
+
+### 📁 Safe Action File Organization
+- `src/actions/safe-auth-actions.ts` - Authentication (10 actions)
+- `src/actions/safe-template-actions.ts` - Templates (8 actions)  
+- `src/actions/safe-invitation-actions.ts` - Invitations (8 actions)
+- `src/actions/safe-upload-actions.ts` - File uploads (4 actions)
+- `src/actions/safe-rsvp-actions.ts` - RSVP management (6 actions)
 
 ## Block-Based Editor Critical Guidelines
 

@@ -4,7 +4,9 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TemplateSelector } from '@/components/invitation/TemplateSelector';
 import { Button } from '@/components/ui/button';
-import type { Template } from '@/types';
+import type { Database } from '@/types/database';
+
+type Template = Database['public']['Tables']['templates']['Row'];
 import '@/styles/templates.css';
 
 // AIDEV-NOTE: Template selection page with navigation to editor

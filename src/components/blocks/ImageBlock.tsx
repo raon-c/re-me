@@ -68,10 +68,8 @@ export function ImageBlock({
     if (!file) return;
 
     try {
-      const result = await uploadImage(file, {
-        alt: localData.alt || file.name,
-        caption: localData.caption,
-        onProgress: (progress) => {
+      const result = await uploadImage(file, 'invitations', {
+        onProgress: (progress: number) => {
           console.log('업로드 진행률:', progress);
         },
       });
@@ -79,8 +77,8 @@ export function ImageBlock({
       if (result) {
         setLocalData(prev => ({
           ...prev,
-          imageUrl: result.publicUrl,
-          alt: result.alt || file.name,
+          imageUrl: result.url,
+          alt: result.originalName || file.name,
         }));
       }
     } catch (error) {

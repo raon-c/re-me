@@ -1,13 +1,16 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TemplateCard } from './TemplateCard';
 import { TemplatePreviewModal } from './TemplatePreviewModal';
-import { api } from '@/lib/trpc';
+import { getTemplatesAction, getTemplateCategoriesAction } from '@/actions/safe-template-actions';
 import { cn } from '@/lib/utils';
-import type { Template, TemplateCategory } from '@/types';
+import type { TemplateCategory } from '@/types';
+import type { Database } from '@/types/database';
+
+type Template = Database['public']['Tables']['templates']['Row'];
 
 // AIDEV-NOTE: Template selector with category filtering and responsive grid layout
 
@@ -36,17 +39,42 @@ export function TemplateSelector({
     TemplateCategory | 'all'
   >('all');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<Array<{ category: string; count: number; displayName: string }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch all templates
-  const {
-    data: templates = [],
-    isLoading,
-    error,
-  } = api.template.getAll.useQuery();
+  // Load templates and categories on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      setError(null);
 
-  // Fetch category counts for filter buttons
-  const { data: categoryCounts = [] } =
-    api.template.getCategoriesWithCounts.useQuery();
+      try {
+        // Load templates and categories in parallel
+        const [templatesResult, categoriesResult] = await Promise.all([
+          getTemplatesAction({ limit: 100, offset: 0 }),
+          getTemplateCategoriesAction({}),
+        ]);
+
+        if (templatesResult?.data) {
+          setTemplates(templatesResult.data.templates || []);
+        } else {
+          throw new Error(templatesResult?.serverError || '템플릿을 불러오는데 실패했습니다.');
+        }
+
+        if (categoriesResult?.data) {
+          setCategoryCounts(categoriesResult.data || []);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '데이터 로딩 중 오류가 발생했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   // Filter templates by selected category
   const filteredTemplates = useMemo(() => {
@@ -85,7 +113,7 @@ export function TemplateSelector({
         <CardContent className="flex items-center justify-center py-8">
           <div className="text-center">
             <p className="text-destructive mb-2">
-              템플릿을 불러오는 중 오류가 발생했습니다.
+              {error}
             </p>
             <Button variant="outline" onClick={() => window.location.reload()}>
               다시 시도
@@ -161,7 +189,7 @@ export function TemplateSelector({
               {filteredTemplates.map((template) => (
                 <TemplateCard
                   key={template.id}
-                  template={template as Template}
+                  template={template}
                   isSelected={selectedTemplateId === template.id}
                   onSelect={handleTemplateSelect}
                   onPreview={handleTemplatePreview}
@@ -224,7 +252,7 @@ export function TemplateSelector({
                       (t) => t.id === selectedTemplateId
                     );
                     if (template) {
-                      handleTemplatePreview(template as Template);
+                      handleTemplatePreview(template);
                     }
                   }}
                 >
