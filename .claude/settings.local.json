@@ -20,7 +20,9 @@
       "Bash(npx shadcn-ui:*)",
       "Bash(npx:*)",
       "Bash(true)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": []
   }

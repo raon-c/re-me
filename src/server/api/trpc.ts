@@ -16,19 +16,26 @@ import { createClient } from '@/lib/supabase/server';
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async () => {
+export const createTRPCContext = async (opts?: {
+  headers?: Headers;
+}) => {
   // Create Supabase client
   const supabase = await createClient();
 
-  // Get the session from Supabase
+  // AIDEV-NOTE: Use getUser() instead of getSession() for better security
+  // This authenticates the user with the Supabase Auth server
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // AIDEV-NOTE: Context includes both supabase client and session for auth/db operations
+  // Create a session-like object for compatibility
+  const session = user ? { user, access_token: '', refresh_token: '' } : null;
+
+  // AIDEV-NOTE: Context includes request headers for IP/User-Agent tracking
   return {
     supabase,
     session,
+    headers: opts?.headers,
   };
 };
 

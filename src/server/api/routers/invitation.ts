@@ -73,7 +73,8 @@ export const invitationRouter = createTRPCRouter({
         });
 
         return invitation;
-      } catch {
+      } catch (error) {
+        console.error('청첩장 생성 오류:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: '청첩장 생성 중 오류가 발생했습니다.',
@@ -285,7 +286,7 @@ export const invitationRouter = createTRPCRouter({
   // Get public invitation by code (for sharing)
   getByCode: publicProcedure
     .input(z.object({ code: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       try {
         const invitation = await db.invitation.findUnique({
           where: {
@@ -303,14 +304,25 @@ export const invitationRouter = createTRPCRouter({
           });
         }
 
-        // Record view
-        await db.invitationView.create({
-          data: {
-            invitationId: invitation.id,
-            ipAddress: '',
-            userAgent: '',
-          },
-        });
+        // AIDEV-NOTE: Enhanced view logging with IP and User-Agent tracking
+        try {
+          const ipAddress = ctx.headers?.get('x-forwarded-for')?.split(',')[0] || 
+                           ctx.headers?.get('x-real-ip') || 
+                           ctx.headers?.get('cf-connecting-ip') || // Cloudflare
+                           'unknown';
+          const userAgent = ctx.headers?.get('user-agent') || 'unknown';
+
+          await db.invitationView.create({
+            data: {
+              invitationId: invitation.id,
+              ipAddress: ipAddress.slice(0, 45), // Database field limit
+              userAgent: userAgent.slice(0, 500), // Database field limit
+            },
+          });
+        } catch (error) {
+          // AIDEV-NOTE: Log view tracking errors but don't fail the request
+          console.error('Failed to record invitation view:', error);
+        }
 
         // Convert the database invitation to editor state format
         const editorState = {
@@ -433,6 +445,7 @@ export const invitationRouter = createTRPCRouter({
         });
       }
     }),
+
 
   // Get wedding information
   getWeddingInfo: protectedProcedure
