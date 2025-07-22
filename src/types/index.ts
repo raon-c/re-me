@@ -40,3 +40,14 @@ export interface TemplateRenderData {
 }
 
 // AIDEV-NOTE: Template system interfaces for rendering and styling
+
+// Share functionality types
+export interface ShareData {
+  id: string;
+  invitationCode: string;
+  groomName: string;
+  brideName: string;
+  weddingDate: string;
+  weddingTime: string;
+  venueName: string;
+}
