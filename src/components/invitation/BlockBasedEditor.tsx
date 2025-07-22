@@ -133,46 +133,14 @@ export function BlockBasedEditor({
     setInternalPreviewMode(isPreview);
   }, []);
 
-  // Template이 제공된 경우 간단한 렌더링
-  if (template) {
-    return (
-      <div className={cn('w-full h-full', className)}>
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="text-center space-y-4">
-            <div className="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-              <div className="text-gray-600 text-center">
-                <svg
-                  className="w-16 h-16 mx-auto mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                <h3 className="text-lg font-medium mb-2">{template.name}</h3>
-                <p className="text-sm text-gray-500">
-                  블록 기반 에디터로 편집할 수 있습니다
-                </p>
-                <div className="mt-4 text-xs text-gray-400">
-                  {getCategoryLabel(template.category)} 템플릿
-                </div>
-              </div>
-            </div>
-            {currentPreviewMode && (
-              <div className="text-sm text-blue-600 font-medium">
-                미리보기 모드
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Template이 제공된 경우 초기 블록 생성 후 에디터 렌더링
+  useEffect(() => {
+    if (template && blocks.length === 0) {
+      // 템플릿 기반 기본 블록 생성
+      const initialBlocks = createInitialBlocksFromTemplate(template);
+      loadBlocks(initialBlocks);
+    }
+  }, [template, blocks.length, loadBlocks]);
 
   if (isLoading && invitationId) {
     return (
@@ -478,4 +446,151 @@ function extractTitleFromBlocks(blocks: Block[]): string {
     }
   }
   return '새 청첩장';
+}
+
+// AIDEV-NOTE: 템플릿을 기반으로 초기 블록 생성
+function createInitialBlocksFromTemplate(template: Template): Block[] {
+  const blocks: Block[] = [];
+  let order = 0;
+
+  // 1. 헤더 블록 (기본)
+  blocks.push({
+    id: 'header-block',
+    type: 'header',
+    order: order++,
+    isVisible: true,
+    isEditing: false,
+    data: {
+      brideName: '신부이름',
+      groomName: '신랑이름',
+      weddingDate: '',
+      weddingTime: '',
+      subtitle: '결혼합니다',
+    },
+    styles: {
+      textAlign: 'center',
+      fontSize: 'large',
+      fontWeight: 'bold',
+      padding: 'large',
+      margin: 'medium',
+    },
+  });
+
+  // 2. 콘텐츠 블록 (인사말)
+  blocks.push({
+    id: 'greeting-block',
+    type: 'content',
+    order: order++,
+    isVisible: true,
+    isEditing: false,
+    data: {
+      title: '결혼 인사',
+      content:
+        '평생 서로 사랑하며 행복하게 살겠습니다.\n부디 오셔서 축복해 주시기 바랍니다.',
+      isRichText: false,
+    },
+    styles: {
+      textAlign: 'center',
+      fontSize: 'medium',
+      padding: 'medium',
+      margin: 'medium',
+    },
+  });
+
+  // 3. 이미지 블록 (옵션)
+  if (template.category !== 'minimal') {
+    blocks.push({
+      id: 'main-image-block',
+      type: 'image',
+      order: order++,
+      isVisible: true,
+      isEditing: false,
+      data: {
+        imageUrl: template.previewImageUrl || '',
+        alt: '웨딩 사진',
+        caption: '',
+        aspectRatio: 'landscape',
+      },
+      styles: {
+        textAlign: 'center',
+        padding: 'medium',
+        margin: 'medium',
+      },
+    });
+  }
+
+  // 4. 위치 블록
+  blocks.push({
+    id: 'location-block',
+    type: 'location',
+    order: order++,
+    isVisible: true,
+    isEditing: false,
+    data: {
+      venueName: '웨딩홀 이름',
+      address: '주소를 입력해주세요',
+      detailAddress: '',
+      parkingInfo: '',
+      transportInfo: '',
+    },
+    styles: {
+      textAlign: 'center',
+      fontSize: 'medium',
+      padding: 'medium',
+      margin: 'medium',
+    },
+  });
+
+  // 5. 연락처 블록
+  blocks.push({
+    id: 'contact-block',
+    type: 'contact',
+    order: order++,
+    isVisible: true,
+    isEditing: false,
+    data: {
+      title: '연락처',
+      contacts: [
+        {
+          name: '신랑이름',
+          relation: '신랑',
+          phone: '010-0000-0000',
+        },
+        {
+          name: '신부이름',
+          relation: '신부',
+          phone: '010-0000-0000',
+        },
+      ],
+    },
+    styles: {
+      textAlign: 'center',
+      fontSize: 'medium',
+      padding: 'medium',
+      margin: 'medium',
+    },
+  });
+
+  // 6. RSVP 블록
+  blocks.push({
+    id: 'rsvp-block',
+    type: 'rsvp',
+    order: order++,
+    isVisible: true,
+    isEditing: false,
+    data: {
+      title: '참석 의사 전달',
+      description: '참석 여부를 알려주세요',
+      dueDate: '',
+      isEnabled: true,
+    },
+    styles: {
+      textAlign: 'center',
+      fontSize: 'medium',
+      padding: 'medium',
+      margin: 'medium',
+    },
+  });
+
+  return blocks;
 }
