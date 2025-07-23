@@ -119,6 +119,11 @@ export const commonSchemas = {
     id: z.string().uuid('유효하지 않은 ID 형식입니다.'),
   }),
 
+  // Template ID validation schema (supports custom string IDs)
+  templateId: z.object({
+    id: z.string().min(1, '템플릿 ID가 필요합니다.').max(50, '템플릿 ID가 너무 깁니다.'),
+  }),
+
   // Invitation code schema
   invitationCode: z.object({
     code: z.string().length(8, '초대 코드는 8자리여야 합니다.'),

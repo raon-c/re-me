@@ -71,7 +71,7 @@ export const getTemplatesAction = actionClient
  * ID로 특정 템플릿의 상세 정보를 조회합니다.
  */
 export const getTemplateByIdAction = actionClient
-  .schema(commonSchemas.id)
+  .schema(commonSchemas.templateId)
   .action(async ({ parsedInput }) => {
     const { id } = parsedInput;
 
@@ -239,7 +239,7 @@ export const searchTemplatesAction = actionClient
  * 샘플 데이터로 템플릿을 렌더링할 수 있는 데이터를 생성합니다.
  */
 export const generateTemplatePreviewAction = actionClient
-  .schema(commonSchemas.id)
+  .schema(commonSchemas.templateId)
   .action(async ({ parsedInput }) => {
     const { id } = parsedInput;
 
@@ -280,7 +280,7 @@ export const generateTemplatePreviewAction = actionClient
  * 템플릿 사용 통계 조회 Safe Action (관리자용)
  */
 export const getTemplateStatsAction = actionClient
-  .schema(commonSchemas.id)
+  .schema(commonSchemas.templateId)
   .action(async ({ parsedInput }) => {
     const { id } = parsedInput;
 
