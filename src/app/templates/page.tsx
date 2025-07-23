@@ -80,7 +80,7 @@ export default function TemplatesPage() {
                   <li>
                     <strong>주 색상:</strong>{' '}
                     {(
-                      selectedTemplate.cssStyles as Record<
+                      selectedTemplate.css_styles as Record<
                         string,
                         string
                       > | null
@@ -89,7 +89,7 @@ export default function TemplatesPage() {
                   <li>
                     <strong>보조 색상:</strong>{' '}
                     {(
-                      selectedTemplate.cssStyles as Record<
+                      selectedTemplate.css_styles as Record<
                         string,
                         string
                       > | null
@@ -98,7 +98,7 @@ export default function TemplatesPage() {
                   <li>
                     <strong>폰트:</strong>{' '}
                     {(
-                      selectedTemplate.cssStyles as Record<
+                      selectedTemplate.css_styles as Record<
                         string,
                         string
                       > | null

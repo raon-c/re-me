@@ -2,17 +2,24 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { WeddingInfoForm } from '@/components/wedding/WeddingInfoForm';
-import { api } from '@/lib/trpc';
+import {
+  getInvitationByIdAction,
+  updateInvitationAction,
+} from '@/actions/safe-invitation-actions';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
-import { useEffect } from 'react';
-import type { WeddingInfoFormData } from '@/lib/wedding-validations';
+import { useEffect, useState } from 'react';
+import type { WeddingInfoFormData } from '@/lib/validations';
 
 export default function WeddingInfoPage() {
   const params = useParams();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const invitationId = params.id as string;
+  const [weddingInfo, setWeddingInfo] = useState<any>(null);
+  const [isLoadingWeddingInfo, setIsLoadingWeddingInfo] = useState(false);
+  const [weddingInfoError, setWeddingInfoError] = useState<Error | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // 인증 확인
   useEffect(() => {
@@ -22,48 +29,81 @@ export default function WeddingInfoPage() {
   }, [user, authLoading, router]);
 
   // 결혼식 정보 조회
-  const {
-    data: weddingInfo,
-    isLoading: isLoadingWeddingInfo,
-    error: weddingInfoError,
-  } = api.invitation.getWeddingInfo.useQuery(
-    { id: invitationId },
-    { enabled: !!invitationId && !!user }
-  );
+  useEffect(() => {
+    const loadWeddingInfo = async () => {
+      if (!invitationId || !user) return;
 
-  // 결혼식 정보 업데이트
-  const updateWeddingInfoMutation = api.invitation.updateWeddingInfo.useMutation({
-    onSuccess: () => {
-      toast.success('결혼식 정보가 성공적으로 저장되었습니다.');
-      router.push(`/invitation/${invitationId}/edit` as any);
-    },
-    onError: (error) => {
-      toast.error(`저장 실패: ${error.message}`);
-    },
-  });
+      setIsLoadingWeddingInfo(true);
+      try {
+        const result = await getInvitationByIdAction({ id: invitationId });
+        if (result?.data) {
+          setWeddingInfo(result.data);
+        } else {
+          throw new Error(
+            result?.serverError || '초대장을 불러올 수 없습니다.'
+          );
+        }
+      } catch (error) {
+        console.error('Failed to load wedding info:', error);
+        setWeddingInfoError(
+          error instanceof Error ? error : new Error('알 수 없는 오류')
+        );
+        toast.error('결혼식 정보를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoadingWeddingInfo(false);
+      }
+    };
+
+    loadWeddingInfo();
+  }, [invitationId, user]);
 
   // 임시 저장 (부분 업데이트)
   const handleSave = async (data: Partial<WeddingInfoFormData>) => {
+    setIsUpdating(true);
     try {
-      await updateWeddingInfoMutation.mutateAsync({
+      const result = await updateInvitationAction({
         id: invitationId,
-        weddingInfo: data,
+        data: data,
       });
-      toast.success('임시 저장되었습니다.');
+
+      if (result?.data) {
+        toast.success('임시 저장되었습니다.');
+        setWeddingInfo(result.data);
+      } else {
+        throw new Error(result?.serverError || '저장에 실패했습니다.');
+      }
     } catch (error) {
       console.error('Save error:', error);
+      toast.error(
+        error instanceof Error ? error.message : '저장 중 오류가 발생했습니다.'
+      );
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   // 폼 제출 (완전 저장)
   const handleSubmit = async (data: WeddingInfoFormData) => {
+    setIsUpdating(true);
     try {
-      await updateWeddingInfoMutation.mutateAsync({
+      const result = await updateInvitationAction({
         id: invitationId,
-        weddingInfo: data,
+        data: data,
       });
+
+      if (result?.data) {
+        toast.success('결혼식 정보가 성공적으로 저장되었습니다.');
+        router.push(`/invitation/${invitationId}/edit` as any);
+      } else {
+        throw new Error(result?.serverError || '저장에 실패했습니다.');
+      }
     } catch (error) {
       console.error('Submit error:', error);
+      toast.error(
+        error instanceof Error ? error.message : '저장 중 오류가 발생했습니다.'
+      );
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -104,7 +144,7 @@ export default function WeddingInfoPage() {
         initialData={weddingInfo}
         onSubmit={handleSubmit}
         onSave={handleSave}
-        isLoading={updateWeddingInfoMutation.isPending}
+        isLoading={isUpdating}
       />
     </div>
   );

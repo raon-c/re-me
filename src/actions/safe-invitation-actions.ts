@@ -12,26 +12,26 @@ type Invitation = Database['public']['Tables']['invitations']['Row'];
 type InvitationInsert = Database['public']['Tables']['invitations']['Insert'];
 type InvitationUpdate = Database['public']['Tables']['invitations']['Update'];
 
-// Validation schemas
+// Validation schemas - matching database schema (snake_case)
 const createInvitationSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요.').max(200, '제목은 200자 이하여야 합니다.'),
-  groomName: z.string().min(1, '신랑 이름을 입력해주세요.').max(100, '이름은 100자 이하여야 합니다.'),
-  brideName: z.string().min(1, '신부 이름을 입력해주세요.').max(100, '이름은 100자 이하여야 합니다.'),
-  weddingDate: z.string().refine((date) => !isNaN(Date.parse(date)), '올바른 날짜를 입력해주세요.'),
-  weddingTime: z.string().refine((time) => /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time), '올바른 시간을 입력해주세요.'),
-  venueName: z.string().min(1, '예식장 이름을 입력해주세요.').max(200, '예식장 이름은 200자 이하여야 합니다.'),
-  venueAddress: z.string().min(1, '예식장 주소를 입력해주세요.'),
-  venueLat: z.number().optional(),
-  venueLng: z.number().optional(),
-  templateId: z.string().min(1, '템플릿을 선택해주세요.'),
-  customMessage: z.string().max(1000, '메시지는 1000자 이하여야 합니다.').optional(),
-  dressCode: z.string().max(100, '드레스 코드는 100자 이하여야 합니다.').optional(),
-  parkingInfo: z.string().max(500, '주차 정보는 500자 이하여야 합니다.').optional(),
-  mealInfo: z.string().max(500, '식사 정보는 500자 이하여야 합니다.').optional(),
-  specialNotes: z.string().max(1000, '특별 안내는 1000자 이하여야 합니다.').optional(),
-  rsvpEnabled: z.boolean().default(true),
-  rsvpDeadline: z.string().optional(),
-  backgroundImageUrl: z.string().max(500, 'URL이 너무 깁니다.').optional(),
+  groom_name: z.string().min(1, '신랑 이름을 입력해주세요.').max(100, '이름은 100자 이하여야 합니다.'),
+  bride_name: z.string().min(1, '신부 이름을 입력해주세요.').max(100, '이름은 100자 이하여야 합니다.'),
+  wedding_date: z.string().refine((date) => !isNaN(Date.parse(date)), '올바른 날짜를 입력해주세요.'),
+  wedding_time: z.string().refine((time) => /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time), '올바른 시간을 입력해주세요.'),
+  venue_name: z.string().min(1, '예식장 이름을 입력해주세요.').max(200, '예식장 이름은 200자 이하여야 합니다.'),
+  venue_address: z.string().min(1, '예식장 주소를 입력해주세요.'),
+  venue_lat: z.number().optional(),
+  venue_lng: z.number().optional(),
+  template_id: z.string().min(1, '템플릿을 선택해주세요.'),
+  custom_message: z.string().max(1000, '메시지는 1000자 이하여야 합니다.').optional(),
+  dress_code: z.string().max(100, '드레스 코드는 100자 이하여야 합니다.').optional(),
+  parking_info: z.string().max(500, '주차 정보는 500자 이하여야 합니다.').optional(),
+  meal_info: z.string().max(500, '식사 정보는 500자 이하여야 합니다.').optional(),
+  special_notes: z.string().max(1000, '특별 안내는 1000자 이하여야 합니다.').optional(),
+  rsvp_enabled: z.boolean().default(true),
+  rsvp_deadline: z.string().optional(),
+  background_image_url: z.string().max(500, 'URL이 너무 깁니다.').optional(),
 });
 
 const updateInvitationSchema = createInvitationSchema.partial();
@@ -80,23 +80,6 @@ export const createInvitationAction = authActionClient
       ...parsedInput,
       user_id: ctx.user.id,
       invitation_code: invitationCode!,
-      groom_name: parsedInput.groomName,
-      bride_name: parsedInput.brideName,
-      wedding_date: parsedInput.weddingDate,
-      wedding_time: parsedInput.weddingTime,
-      venue_name: parsedInput.venueName,
-      venue_address: parsedInput.venueAddress,
-      venue_lat: parsedInput.venueLat,
-      venue_lng: parsedInput.venueLng,
-      template_id: parsedInput.templateId,
-      custom_message: parsedInput.customMessage,
-      dress_code: parsedInput.dressCode,
-      parking_info: parsedInput.parkingInfo,
-      meal_info: parsedInput.mealInfo,
-      special_notes: parsedInput.specialNotes,
-      rsvp_enabled: parsedInput.rsvpEnabled,
-      rsvp_deadline: parsedInput.rsvpDeadline,
-      background_image_url: parsedInput.backgroundImageUrl,
     };
 
     const { data: invitation, error } = await ctx.supabase
@@ -239,27 +222,8 @@ export const updateInvitationAction = authActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { id, data: input } = parsedInput;
 
-    // 업데이트 데이터 준비 (camelCase → snake_case)
-    const updateData: InvitationUpdate = {};
-    
-    if (input.title !== undefined) updateData.title = input.title;
-    if (input.groomName !== undefined) updateData.groom_name = input.groomName;
-    if (input.brideName !== undefined) updateData.bride_name = input.brideName;
-    if (input.weddingDate !== undefined) updateData.wedding_date = input.weddingDate;
-    if (input.weddingTime !== undefined) updateData.wedding_time = input.weddingTime;
-    if (input.venueName !== undefined) updateData.venue_name = input.venueName;
-    if (input.venueAddress !== undefined) updateData.venue_address = input.venueAddress;
-    if (input.venueLat !== undefined) updateData.venue_lat = input.venueLat;
-    if (input.venueLng !== undefined) updateData.venue_lng = input.venueLng;
-    if (input.templateId !== undefined) updateData.template_id = input.templateId;
-    if (input.customMessage !== undefined) updateData.custom_message = input.customMessage;
-    if (input.dressCode !== undefined) updateData.dress_code = input.dressCode;
-    if (input.parkingInfo !== undefined) updateData.parking_info = input.parkingInfo;
-    if (input.mealInfo !== undefined) updateData.meal_info = input.mealInfo;
-    if (input.specialNotes !== undefined) updateData.special_notes = input.specialNotes;
-    if (input.rsvpEnabled !== undefined) updateData.rsvp_enabled = input.rsvpEnabled;
-    if (input.rsvpDeadline !== undefined) updateData.rsvp_deadline = input.rsvpDeadline;
-    if (input.backgroundImageUrl !== undefined) updateData.background_image_url = input.backgroundImageUrl;
+    // 업데이트 데이터 준비 (input schema already matches database schema)
+    const updateData: InvitationUpdate = { ...input };
 
     const { data: invitation, error } = await ctx.supabase
       .from('invitations')

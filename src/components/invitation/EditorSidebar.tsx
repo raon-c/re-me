@@ -543,13 +543,7 @@ export function EditorSidebar({
               </h3>
               <ImageUpload
                 onImageUploaded={handleImageUploaded}
-                options={{
-                  width: 800,
-                  height: 600,
-                  quality: 85,
-                  format: 'webp',
-                  createThumbnail: true,
-                }}
+                folder="invitations"
               />
             </Card>
 

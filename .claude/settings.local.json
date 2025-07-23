@@ -22,7 +22,8 @@
       "Bash(true)",
       "Bash(rm:*)",
       "Bash(mkdir:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

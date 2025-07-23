@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { loginAction } from '@/actions/safe-auth-actions';
-import { useSafeActionWithToast } from '@/hooks/useSafeAction';
+import { useSafeAction } from '@/hooks/useSafeAction';
 import { toast } from 'sonner';
 
 // AIDEV-NOTE: Example login form using safe actions with proper error handling
@@ -37,19 +37,24 @@ export function LoginForm({ onSuccess, className }: LoginFormProps) {
     resolver: zodResolver(loginSchema),
   });
 
-  const loginSafeAction = useSafeActionWithToast(loginAction, {
-    onSuccess: (data) => {
-      toast.success(data.message || '로그인되었습니다.');
-      reset();
-      onSuccess?.();
-    },
-    onError: (error) => {
-      toast.error(error);
-    },
-  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = async (data: LoginFormData) => {
-    await loginSafeAction.execute(data);
+    setIsLoading(true);
+    try {
+      const result = await loginAction(data);
+      if (result?.data) {
+        toast.success(result.data.message || '로그인되었습니다.');
+        reset();
+        onSuccess?.();
+      } else {
+        toast.error(result?.serverError || '로그인에 실패했습니다.');
+      }
+    } catch (error) {
+      toast.error('로그인 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,7 +71,7 @@ export function LoginForm({ onSuccess, className }: LoginFormProps) {
               type="email"
               placeholder="이메일을 입력해주세요"
               {...register('email')}
-              disabled={loginSafeAction.isLoading}
+              disabled={isLoading}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -80,25 +85,19 @@ export function LoginForm({ onSuccess, className }: LoginFormProps) {
               type="password"
               placeholder="비밀번호를 입력해주세요"
               {...register('password')}
-              disabled={loginSafeAction.isLoading}
+              disabled={isLoading}
             />
             {errors.password && (
               <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
           </div>
 
-          {loginSafeAction.error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-              {loginSafeAction.error}
-            </div>
-          )}
-
           <Button
             type="submit"
             className="w-full"
-            disabled={loginSafeAction.isLoading}
+            disabled={isLoading}
           >
-            {loginSafeAction.isLoading ? '로그인 중...' : '로그인'}
+            {isLoading ? '로그인 중...' : '로그인'}
           </Button>
         </form>
       </CardContent>

@@ -15,7 +15,10 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { api } from '@/lib/trpc';
+import {
+  getUserImagesAction,
+  deleteImageAction,
+} from '@/actions/safe-upload-actions';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -27,11 +30,11 @@ interface ImageGalleryProps {
 
 interface ImageItem {
   name: string;
-  fullPath: string;
-  publicUrl: string;
+  path: string;
+  url: string;
   size: number;
-  lastModified: string;
-  contentType: string;
+  createdAt: string;
+  contentType?: string;
 }
 
 export function ImageGallery({
@@ -43,47 +46,55 @@ export function ImageGallery({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const [imagesData, setImagesData] = useState<{ images: ImageItem[] } | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
   // 이미지 목록 조회
-  const {
-    data: imagesData,
-    isLoading,
-    refetch,
-  } = api.upload.getUserImages.useQuery({
-    limit: 50,
-    offset: 0,
-  });
+  const loadImages = async () => {
+    setIsLoading(true);
+    try {
+      const result = await getUserImagesAction({
+        limit: 50,
+        page: 1,
+      });
 
-  // 이미지 삭제 뮤테이션
-  const deleteMutation = api.upload.deleteImage.useMutation({
-    onSuccess: () => {
-      toast.success('이미지가 삭제되었습니다.');
-      refetch();
-    },
-    onError: (error) => {
-      toast.error(`삭제 실패: ${error.message}`);
-    },
-  });
+      if (result?.data) {
+        setImagesData({ images: result.data.files });
+      }
+    } catch (error) {
+      toast.error('이미지 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 이미지 로드
+  React.useEffect(() => {
+    loadImages();
+  }, []);
 
   // 검색 필터
-  const filteredImages = imagesData?.images?.filter((image) =>
-    image.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredImages =
+    imagesData?.images?.filter((image) =>
+      image.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   // 이미지 선택 핸들러
   const handleImageSelect = (image: ImageItem) => {
     if (selectable) {
-      setSelectedImages(prev => {
+      setSelectedImages((prev) => {
         const newSet = new Set(prev);
-        if (newSet.has(image.publicUrl)) {
-          newSet.delete(image.publicUrl);
+        if (newSet.has(image.url)) {
+          newSet.delete(image.url);
         } else {
-          newSet.add(image.publicUrl);
+          newSet.add(image.url);
         }
         return newSet;
       });
     }
-    onImageSelect?.(image.publicUrl, {
+    onImageSelect?.(image.url, {
       name: image.name,
       size: image.size,
       contentType: image.contentType,
@@ -93,7 +104,21 @@ export function ImageGallery({
   // 이미지 삭제 핸들러
   const handleDeleteImage = async (image: ImageItem) => {
     if (confirm('이미지를 삭제하시겠습니까?')) {
-      await deleteMutation.mutateAsync({ fileName: image.fullPath });
+      try {
+        const result = await deleteImageAction({ filePath: image.path });
+        if (result?.data) {
+          toast.success('이미지가 삭제되었습니다.');
+          await loadImages(); // 목록 새로고침
+        } else {
+          throw new Error(result?.serverError || '삭제에 실패했습니다.');
+        }
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : '삭제 중 오류가 발생했습니다.'
+        );
+      }
     }
   };
 
@@ -112,7 +137,7 @@ export function ImageGallery({
   // 이미지 다운로드 핸들러
   const handleDownloadImage = (image: ImageItem) => {
     const link = document.createElement('a');
-    link.href = image.publicUrl;
+    link.href = image.url;
     link.download = image.name;
     link.target = '_blank';
     link.click();
@@ -146,7 +171,6 @@ export function ImageGallery({
       </Card>
     );
   }
-
 
   return (
     <Card className={cn('p-6', className)}>
@@ -192,21 +216,21 @@ export function ImageGallery({
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredImages.map((image) => (
             <div
-              key={image.fullPath}
+              key={image.path}
               className={cn(
                 'relative group cursor-pointer border-2 border-transparent rounded-lg overflow-hidden transition-all hover:shadow-lg',
-                selectable && selectedImages.has(image.publicUrl) && 'border-blue-500'
+                selectable && selectedImages.has(image.url) && 'border-blue-500'
               )}
               onClick={() => handleImageSelect(image)}
             >
               <div className="aspect-square bg-gray-100">
                 <img
-                  src={image.publicUrl}
+                  src={image.url}
                   alt={image.name}
                   className="w-full h-full object-cover"
                 />
               </div>
-              
+
               {/* 오버레이 */}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all">
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -216,7 +240,7 @@ export function ImageGallery({
                       variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
-                        window.open(image.publicUrl, '_blank');
+                        window.open(image.url, '_blank');
                       }}
                       className="h-8 w-8 p-0 bg-white"
                     >
@@ -227,11 +251,11 @@ export function ImageGallery({
                       variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCopyUrl(image.publicUrl);
+                        handleCopyUrl(image.url);
                       }}
                       className="h-8 w-8 p-0 bg-white"
                     >
-                      {copiedUrl === image.publicUrl ? (
+                      {copiedUrl === image.url ? (
                         <Check className="h-4 w-4 text-green-600" />
                       ) : (
                         <Copy className="h-4 w-4" />
@@ -277,37 +301,39 @@ export function ImageGallery({
         <div className="space-y-2">
           {filteredImages.map((image) => (
             <div
-              key={image.fullPath}
+              key={image.path}
               className={cn(
                 'flex items-center space-x-4 p-3 border rounded-lg cursor-pointer transition-all hover:bg-gray-50',
-                selectable && selectedImages.has(image.publicUrl) && 'bg-blue-50 border-blue-500'
+                selectable &&
+                  selectedImages.has(image.url) &&
+                  'bg-blue-50 border-blue-500'
               )}
               onClick={() => handleImageSelect(image)}
             >
               <div className="flex-shrink-0">
                 <img
-                  src={image.publicUrl}
+                  src={image.url}
                   alt={image.name}
                   className="w-16 h-16 object-cover rounded-md"
                 />
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
                   {image.name}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {formatFileSize(image.size)} • {formatDate(image.lastModified)}
+                  {formatFileSize(image.size)} • {formatDate(image.createdAt)}
                 </p>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open(image.publicUrl, '_blank');
+                    window.open(image.url, '_blank');
                   }}
                   className="h-8 w-8 p-0"
                 >
@@ -318,11 +344,11 @@ export function ImageGallery({
                   variant="outline"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleCopyUrl(image.publicUrl);
+                    handleCopyUrl(image.url);
                   }}
                   className="h-8 w-8 p-0"
                 >
-                  {copiedUrl === image.publicUrl ? (
+                  {copiedUrl === image.url ? (
                     <Check className="h-4 w-4 text-green-600" />
                   ) : (
                     <Copy className="h-4 w-4" />

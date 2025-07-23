@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { BlockBasedEditor } from '@/components/invitation/BlockBasedEditor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { api } from '@/lib/trpc';
+import { getTemplateByIdAction } from '@/actions/safe-template-actions';
 import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Template } from '@/types';
 
 // AIDEV-NOTE: 청첩장 생성 페이지 - 템플릿 기반 블록 에디터 사용
@@ -15,22 +16,42 @@ function CreateInvitationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get('template');
-  
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null
+  );
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isTemplateLoading, setIsTemplateLoading] = useState(false);
+  const [templateError, setTemplateError] = useState<Error | null>(null);
 
   // 템플릿 정보 가져오기
-  const { data: template, isLoading: isTemplateLoading, error: templateError } = 
-    api.template.getById.useQuery(
-      { id: templateId! },
-      { enabled: !!templateId }
-    );
-
   useEffect(() => {
-    if (template) {
-      setSelectedTemplate(template as Template);
-    }
-  }, [template]);
+    const loadTemplate = async () => {
+      if (!templateId) return;
+
+      setIsTemplateLoading(true);
+      try {
+        const result = await getTemplateByIdAction({ id: templateId });
+        if (result?.data) {
+          setSelectedTemplate(result.data as Template);
+        } else {
+          throw new Error(
+            result?.serverError || '템플릿을 불러올 수 없습니다.'
+          );
+        }
+      } catch (error) {
+        console.error('Failed to load template:', error);
+        setTemplateError(
+          error instanceof Error ? error : new Error('알 수 없는 오류')
+        );
+        toast.error('템플릿을 불러오는데 실패했습니다.');
+      } finally {
+        setIsTemplateLoading(false);
+      }
+    };
+
+    loadTemplate();
+  }, [templateId]);
 
   // 템플릿 ID가 없는 경우 템플릿 선택 페이지로 리다이렉트
   useEffect(() => {
@@ -62,8 +83,18 @@ function CreateInvitationContent() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
             <div className="text-destructive mb-4">
-              <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="w-12 h-12 mx-auto mb-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
               <h3 className="font-semibold">템플릿을 찾을 수 없습니다</h3>
             </div>
@@ -108,9 +139,9 @@ function CreateInvitationContent() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleBack}
                 className="gap-2"
               >
@@ -126,20 +157,16 @@ function CreateInvitationContent() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={togglePreview}
                 className="gap-2"
               >
                 <Eye className="w-4 h-4" />
                 {isPreviewMode ? '편집' : '미리보기'}
               </Button>
-              <Button 
-                size="sm" 
-                onClick={handleSave}
-                className="gap-2"
-              >
+              <Button size="sm" onClick={handleSave} className="gap-2">
                 <Save className="w-4 h-4" />
                 저장
               </Button>
@@ -163,7 +190,7 @@ function CreateInvitationContent() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <BlockBasedEditor 
+                <BlockBasedEditor
                   template={selectedTemplate}
                   isPreviewMode={isPreviewMode}
                 />
@@ -180,7 +207,9 @@ function CreateInvitationContent() {
               <CardContent className="space-y-3">
                 <div>
                   <label className="text-sm font-medium">템플릿 이름</label>
-                  <p className="text-sm text-muted-foreground">{selectedTemplate.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedTemplate.name}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium">카테고리</label>
@@ -191,25 +220,36 @@ function CreateInvitationContent() {
                 <div>
                   <label className="text-sm font-medium">스타일</label>
                   <div className="text-sm text-muted-foreground space-y-1">
-                    {selectedTemplate.cssStyles && typeof selectedTemplate.cssStyles === 'object' && (
-                      <>
-                        {(selectedTemplate.cssStyles as any).primaryColor && (
-                          <div className="flex items-center gap-2">
-                            <span>주 색상:</span>
-                            <div 
-                              className="w-4 h-4 rounded border"
-                              style={{ backgroundColor: (selectedTemplate.cssStyles as any).primaryColor }}
-                            />
-                            <span className="text-xs">
-                              {(selectedTemplate.cssStyles as any).primaryColor}
-                            </span>
-                          </div>
-                        )}
-                        {(selectedTemplate.cssStyles as any).fontFamily && (
-                          <div>폰트: {(selectedTemplate.cssStyles as any).fontFamily}</div>
-                        )}
-                      </>
-                    )}
+                    {selectedTemplate.cssStyles &&
+                      typeof selectedTemplate.cssStyles === 'object' && (
+                        <>
+                          {(selectedTemplate.cssStyles as any).primaryColor && (
+                            <div className="flex items-center gap-2">
+                              <span>주 색상:</span>
+                              <div
+                                className="w-4 h-4 rounded border"
+                                style={{
+                                  backgroundColor: (
+                                    selectedTemplate.cssStyles as any
+                                  ).primaryColor,
+                                }}
+                              />
+                              <span className="text-xs">
+                                {
+                                  (selectedTemplate.cssStyles as any)
+                                    .primaryColor
+                                }
+                              </span>
+                            </div>
+                          )}
+                          {(selectedTemplate.cssStyles as any).fontFamily && (
+                            <div>
+                              폰트:{' '}
+                              {(selectedTemplate.cssStyles as any).fontFamily}
+                            </div>
+                          )}
+                        </>
+                      )}
                   </div>
                 </div>
               </CardContent>
@@ -253,11 +293,13 @@ function getCategoryLabel(category: string): string {
 
 export default function CreateInvitationPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      }
+    >
       <CreateInvitationContent />
     </Suspense>
   );

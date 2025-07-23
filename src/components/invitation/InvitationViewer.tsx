@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Clock, Heart } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import type { Invitation, Template } from '@prisma/client';
+import type { Database } from '@/types/database';
 
 // AIDEV-NOTE: 모바일 최적화된 공개 청첩장 뷰어 컴포넌트
 
+type Invitation = Database['public']['Tables']['invitations']['Row'];
+type Template = Database['public']['Tables']['templates']['Row'];
+
 interface InvitationWithTemplate extends Invitation {
-  template: Template | null;
+  template?: Template | null;
 }
 
 interface InvitationViewerProps {
@@ -36,7 +39,7 @@ export function InvitationViewer({ invitation }: InvitationViewerProps) {
   
   // AIDEV-NOTE: 카카오맵 길찾기 기능
   const handleDirections = () => {
-    const query = encodeURIComponent(invitation.venueAddress || invitation.venueName);
+    const query = encodeURIComponent(invitation.venue_address || invitation.venue_name || '');
     const kakaoMapUrl = `https://map.kakao.com/link/search/${query}`;
     window.open(kakaoMapUrl, '_blank');
   };
@@ -44,8 +47,8 @@ export function InvitationViewer({ invitation }: InvitationViewerProps) {
   // AIDEV-NOTE: 공유 기능
   const handleShare = async () => {
     const shareData = {
-      title: `${invitation.groomName} ❤️ ${invitation.brideName} 결혼식`,
-      text: `${invitation.groomName}과 ${invitation.brideName}의 결혼식에 초대합니다.`,
+      title: `${invitation.groom_name} ❤️ ${invitation.bride_name} 결혼식`,
+      text: `${invitation.groom_name}과 ${invitation.bride_name}의 결혼식에 초대합니다.`,
       url: window.location.href,
     };
     
@@ -83,10 +86,10 @@ export function InvitationViewer({ invitation }: InvitationViewerProps) {
       <div className="max-w-md mx-auto relative">
         
         {/* 배경 이미지 */}
-        {invitation.backgroundImageUrl && (
+        {invitation.background_image_url && (
           <div 
             className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10"
-            style={{ backgroundImage: `url(${invitation.backgroundImageUrl})` }}
+            style={{ backgroundImage: `url(${invitation.background_image_url})` }}
           />
         )}
         
@@ -103,25 +106,25 @@ export function InvitationViewer({ invitation }: InvitationViewerProps) {
               
               <div className="space-y-2">
                 <h1 className="text-2xl font-bold text-gray-800">
-                  {invitation.groomName} <span className="text-rose-500">♥</span> {invitation.brideName}
+                  {invitation.groom_name} <span className="text-rose-500">♥</span> {invitation.bride_name}
                 </h1>
                 <p className="text-gray-600">
-                  {formatWeddingDate(new Date(invitation.weddingDate))}
+                  {formatWeddingDate(new Date(invitation.wedding_date))}
                 </p>
                 <p className="text-gray-600">
-                  {formatWeddingTime(new Date(invitation.weddingTime))}
+                  {formatWeddingTime(new Date(invitation.wedding_time))}
                 </p>
               </div>
             </div>
           </Card>
           
           {/* 메시지 섹션 */}
-          {invitation.customMessage && (
+          {invitation.custom_message && (
             <Card className="p-6 bg-white/90 backdrop-blur-sm border-rose-200">
               <div className="text-center">
                 <h2 className="text-lg font-semibold text-gray-800 mb-3">💌 초대의 말씀</h2>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                  {invitation.customMessage}
+                  {invitation.custom_message}
                 </p>
               </div>
             </Card>
@@ -138,15 +141,15 @@ export function InvitationViewer({ invitation }: InvitationViewerProps) {
               <div className="flex items-start space-x-3">
                 <MapPin className="h-5 w-5 text-rose-500 mt-0.5" />
                 <div>
-                  <p className="font-medium text-gray-800">{invitation.venueName}</p>
-                  <p className="text-sm text-gray-600">{invitation.venueAddress}</p>
+                  <p className="font-medium text-gray-800">{invitation.venue_name}</p>
+                  <p className="text-sm text-gray-600">{invitation.venue_address}</p>
                 </div>
               </div>
               
               <div className="flex items-center space-x-3">
                 <Clock className="h-5 w-5 text-rose-500" />
                 <p className="text-gray-700">
-                  {formatWeddingDate(new Date(invitation.weddingDate))} {formatWeddingTime(new Date(invitation.weddingTime))}
+                  {formatWeddingDate(new Date(invitation.wedding_date))} {formatWeddingTime(new Date(invitation.wedding_time))}
                 </p>
               </div>
             </div>
@@ -161,36 +164,36 @@ export function InvitationViewer({ invitation }: InvitationViewerProps) {
           </Card>
           
           {/* 추가 정보 */}
-          {(invitation.dressCode || invitation.parkingInfo || invitation.mealInfo || invitation.specialNotes) && (
+          {(invitation.dress_code || invitation.parking_info || invitation.meal_info || invitation.special_notes) && (
             <Card className="p-6 bg-white/90 backdrop-blur-sm border-rose-200">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">📝 안내사항</h2>
               
               <div className="space-y-3">
-                {invitation.dressCode && (
+                {invitation.dress_code && (
                   <div>
                     <p className="font-medium text-gray-800">드레스코드</p>
-                    <p className="text-sm text-gray-600">{invitation.dressCode}</p>
+                    <p className="text-sm text-gray-600">{invitation.dress_code}</p>
                   </div>
                 )}
                 
-                {invitation.parkingInfo && (
+                {invitation.parking_info && (
                   <div>
                     <p className="font-medium text-gray-800">주차 안내</p>
-                    <p className="text-sm text-gray-600">{invitation.parkingInfo}</p>
+                    <p className="text-sm text-gray-600">{invitation.parking_info}</p>
                   </div>
                 )}
                 
-                {invitation.mealInfo && (
+                {invitation.meal_info && (
                   <div>
                     <p className="font-medium text-gray-800">식사 안내</p>
-                    <p className="text-sm text-gray-600">{invitation.mealInfo}</p>
+                    <p className="text-sm text-gray-600">{invitation.meal_info}</p>
                   </div>
                 )}
                 
-                {invitation.specialNotes && (
+                {invitation.special_notes && (
                   <div>
                     <p className="font-medium text-gray-800">특별 안내</p>
-                    <p className="text-sm text-gray-600">{invitation.specialNotes}</p>
+                    <p className="text-sm text-gray-600">{invitation.special_notes}</p>
                   </div>
                 )}
               </div>
@@ -198,14 +201,14 @@ export function InvitationViewer({ invitation }: InvitationViewerProps) {
           )}
           
           {/* RSVP 섹션 */}
-          {invitation.rsvpEnabled && (
+          {invitation.rsvp_enabled && (
             <Card className="p-6 bg-white/90 backdrop-blur-sm border-rose-200">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">💌 참석 의사 전달</h2>
               
               <div className="space-y-4">
-                {invitation.rsvpDeadline && (
+                {invitation.rsvp_deadline && (
                   <p className="text-sm text-gray-600">
-                    📅 응답 기한: {format(new Date(invitation.rsvpDeadline), 'yyyy년 M월 d일', { locale: ko })}
+                    📅 응답 기한: {format(new Date(invitation.rsvp_deadline), 'yyyy년 M월 d일', { locale: ko })}
                   </p>
                 )}
                 

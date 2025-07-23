@@ -29,11 +29,9 @@ import { toast } from 'sonner';
 import {
   weddingInfoSchema,
   type WeddingInfoFormData,
-  FORM_FIELD_CONFIG,
-  formatPhoneNumber,
-  formatDate,
-  formatTime,
-} from '@/lib/wedding-validations';
+} from '@/lib/validations';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface WeddingInfoFormProps {
   initialData?: Partial<WeddingInfoFormData>;
@@ -59,7 +57,7 @@ const FORM_SECTIONS: FormSection[] = [
     title: '기본 정보',
     icon: <Heart className="h-5 w-5" />,
     description: '신랑신부와 결혼식 기본 정보를 입력하세요.',
-    fields: ['groomName', 'brideName', 'weddingDate', 'weddingTime'],
+    fields: ['groom_name', 'bride_name', 'wedding_date', 'wedding_time'],
     expanded: true,
   },
   {
@@ -67,15 +65,15 @@ const FORM_SECTIONS: FormSection[] = [
     title: '예식장 정보',
     icon: <MapPin className="h-5 w-5" />,
     description: '결혼식이 열릴 장소 정보를 입력하세요.',
-    fields: ['venueName', 'venueAddress', 'venueHall'],
+    fields: ['venue_name', 'venue_address'],
     expanded: true,
   },
   {
-    id: 'contact',
-    title: '연락처 정보',
-    icon: <Phone className="h-5 w-5" />,
-    description: '연락처와 부모님 성함을 입력하세요.',
-    fields: ['groomContact', 'brideContact', 'groomParents', 'brideParents'],
+    id: 'message',
+    title: '초대 메시지',
+    icon: <MessageCircle className="h-5 w-5" />,
+    description: '하객들에게 전달할 메시지를 입력하세요.',
+    fields: ['custom_message'],
     expanded: false,
   },
   {
@@ -83,7 +81,7 @@ const FORM_SECTIONS: FormSection[] = [
     title: '추가 정보',
     icon: <Info className="h-5 w-5" />,
     description: '드레스코드, 주차 안내 등 추가 정보를 입력하세요.',
-    fields: ['customMessage', 'dressCode', 'parkingInfo', 'mealInfo', 'specialNotes'],
+    fields: ['dress_code', 'parking_info', 'meal_info', 'special_notes'],
     expanded: false,
   },
   {
@@ -91,7 +89,7 @@ const FORM_SECTIONS: FormSection[] = [
     title: 'RSVP 설정',
     icon: <MessageCircle className="h-5 w-5" />,
     description: '참석 여부 확인 기능을 설정하세요.',
-    fields: ['rsvpEnabled', 'rsvpDeadline'],
+    fields: ['rsvp_enabled', 'rsvp_deadline'],
     expanded: false,
   },
   {
@@ -99,10 +97,54 @@ const FORM_SECTIONS: FormSection[] = [
     title: '기타 설정',
     icon: <Settings className="h-5 w-5" />,
     description: '계좌 정보, 배경 이미지 등을 설정하세요.',
-    fields: ['accountInfo', 'backgroundImageUrl'],
+    fields: ['background_image_url'],
     expanded: false,
   },
 ];
+
+// AIDEV-NOTE: 폼 필드 설정 - 각 필드의 타입과 레이블 정의
+const FORM_FIELD_CONFIG: Record<string, { 
+  type: 'text' | 'date' | 'time' | 'textarea' | 'checkbox' | 'url';
+  label: string;
+  placeholder?: string;
+  required?: boolean;
+}> = {
+  groom_name: { type: 'text', label: '신랑 이름', placeholder: '신랑 이름을 입력하세요', required: true },
+  bride_name: { type: 'text', label: '신부 이름', placeholder: '신부 이름을 입력하세요', required: true },
+  wedding_date: { type: 'date', label: '결혼식 날짜', required: true },
+  wedding_time: { type: 'time', label: '결혼식 시간', required: true },
+  venue_name: { type: 'text', label: '예식장 이름', placeholder: '예식장 이름을 입력하세요', required: true },
+  venue_address: { type: 'text', label: '예식장 주소', placeholder: '예식장 주소를 입력하세요', required: true },
+  custom_message: { type: 'textarea', label: '초대 메시지', placeholder: '하객들에게 전달할 메시지를 입력하세요' },
+  dress_code: { type: 'text', label: '드레스코드', placeholder: '드레스코드를 입력하세요' },
+  parking_info: { type: 'textarea', label: '주차 안내', placeholder: '주차 정보를 입력하세요' },
+  meal_info: { type: 'textarea', label: '식사 안내', placeholder: '식사 정보를 입력하세요' },
+  special_notes: { type: 'textarea', label: '특별 안내', placeholder: '특별 안내사항을 입력하세요' },
+  rsvp_enabled: { type: 'checkbox', label: 'RSVP 활성화' },
+  rsvp_deadline: { type: 'date', label: 'RSVP 마감일' },
+  background_image_url: { type: 'url', label: '배경 이미지 URL', placeholder: 'https://...' },
+};
+
+// AIDEV-NOTE: 유틸리티 함수들
+const formatDate = (dateString: string) => {
+  try {
+    return format(new Date(dateString), 'yyyy년 M월 d일 EEEE', { locale: ko });
+  } catch {
+    return dateString;
+  }
+};
+
+const formatTime = (timeString: string) => {
+  try {
+    const [hours, minutes] = timeString.split(':');
+    const date = new Date();
+    date.setHours(parseInt(hours, 10));
+    date.setMinutes(parseInt(minutes, 10));
+    return format(date, 'a h시 mm분', { locale: ko });
+  } catch {
+    return timeString;
+  }
+};
 
 export function WeddingInfoForm({
   initialData,
@@ -125,26 +167,20 @@ export function WeddingInfoForm({
   } = useForm<WeddingInfoFormData>({
     resolver: zodResolver(weddingInfoSchema) as any,
     defaultValues: {
-      groomName: initialData?.groomName || '',
-      brideName: initialData?.brideName || '',
-      weddingDate: initialData?.weddingDate || '',
-      weddingTime: initialData?.weddingTime || '',
-      venueName: initialData?.venueName || '',
-      venueAddress: initialData?.venueAddress || '',
-      venueHall: initialData?.venueHall || '',
-      groomContact: initialData?.groomContact || '',
-      brideContact: initialData?.brideContact || '',
-      groomParents: initialData?.groomParents || '',
-      brideParents: initialData?.brideParents || '',
-      customMessage: initialData?.customMessage || '',
-      dressCode: initialData?.dressCode || '',
-      parkingInfo: initialData?.parkingInfo || '',
-      mealInfo: initialData?.mealInfo || '',
-      specialNotes: initialData?.specialNotes || '',
-      rsvpEnabled: initialData?.rsvpEnabled ?? true,
-      rsvpDeadline: initialData?.rsvpDeadline || '',
-      accountInfo: initialData?.accountInfo || '',
-      backgroundImageUrl: initialData?.backgroundImageUrl || '',
+      groom_name: initialData?.groom_name || '',
+      bride_name: initialData?.bride_name || '',
+      wedding_date: initialData?.wedding_date || '',
+      wedding_time: initialData?.wedding_time || '',
+      venue_name: initialData?.venue_name || '',
+      venue_address: initialData?.venue_address || '',
+      custom_message: initialData?.custom_message || '',
+      dress_code: initialData?.dress_code || '',
+      parking_info: initialData?.parking_info || '',
+      meal_info: initialData?.meal_info || '',
+      special_notes: initialData?.special_notes || '',
+      rsvp_enabled: initialData?.rsvp_enabled ?? true,
+      rsvp_deadline: initialData?.rsvp_deadline || '',
+      background_image_url: initialData?.background_image_url || '',
     },
     mode: 'onChange',
   });
@@ -178,13 +214,6 @@ export function WeddingInfoForm({
     }
   };
 
-  // 연락처 포맷팅
-  const handlePhoneChange = (field: 'groomContact' | 'brideContact') => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const formatted = formatPhoneNumber(e.target.value);
-    setValue(field, formatted);
-  };
 
   // 필드 렌더링
   const renderField = (fieldName: keyof WeddingInfoFormData) => {
@@ -248,27 +277,6 @@ export function WeddingInfoForm({
           </div>
         );
 
-      case 'tel':
-        return (
-          <div className="space-y-2">
-            <Label htmlFor={fieldName} className="text-sm font-medium">
-              {config.label}
-              {config.required && <span className="text-red-500 ml-1">*</span>}
-            </Label>
-            <Input
-              {...commonProps}
-              type="tel"
-              onChange={handlePhoneChange(fieldName as 'groomContact' | 'brideContact')}
-              className="h-10"
-            />
-            {error && (
-              <p className="text-sm text-red-500 flex items-center">
-                <Info className="h-4 w-4 mr-1" />
-                {error.message}
-              </p>
-            )}
-          </div>
-        );
 
       default:
         return (
@@ -298,123 +306,76 @@ export function WeddingInfoForm({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          {watchedValues.groomName && watchedValues.brideName
-            ? `${watchedValues.groomName} ❤ ${watchedValues.brideName}`
+          {watchedValues.groom_name && watchedValues.bride_name
+            ? `${watchedValues.groom_name} ❤ ${watchedValues.bride_name}`
             : '신랑 ❤ 신부'}
         </h2>
-        {watchedValues.weddingDate && (
+        {watchedValues.wedding_date && (
           <p className="text-lg text-gray-600 mb-1">
-            {formatDate(watchedValues.weddingDate)}
+            {formatDate(watchedValues.wedding_date)}
           </p>
         )}
-        {watchedValues.weddingTime && (
+        {watchedValues.wedding_time && (
           <p className="text-lg text-gray-600 mb-4">
-            {formatTime(watchedValues.weddingTime)}
+            {formatTime(watchedValues.wedding_time)}
           </p>
         )}
-        {watchedValues.venueName && (
+        {watchedValues.venue_name && (
           <p className="text-lg text-gray-700 font-medium">
-            {watchedValues.venueName}
-            {watchedValues.venueHall && ` • ${watchedValues.venueHall}`}
+            {watchedValues.venue_name}
           </p>
         )}
-        {watchedValues.venueAddress && (
+        {watchedValues.venue_address && (
           <p className="text-sm text-gray-600 mt-2">
-            {watchedValues.venueAddress}
+            {watchedValues.venue_address}
           </p>
         )}
       </div>
 
-      {watchedValues.customMessage && (
+      {watchedValues.custom_message && (
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <p className="text-gray-700 text-center leading-relaxed">
-            {watchedValues.customMessage}
+            {watchedValues.custom_message}
           </p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {(watchedValues.groomContact || watchedValues.brideContact) && (
-          <Card className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-              <Phone className="h-4 w-4 mr-2" />
-              연락처
-            </h3>
-            <div className="space-y-2 text-sm">
-              {watchedValues.groomContact && (
-                <p>신랑: {watchedValues.groomContact}</p>
-              )}
-              {watchedValues.brideContact && (
-                <p>신부: {watchedValues.brideContact}</p>
-              )}
-            </div>
-          </Card>
-        )}
-
-        {(watchedValues.groomParents || watchedValues.brideParents) && (
-          <Card className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-              <Users className="h-4 w-4 mr-2" />
-              부모님
-            </h3>
-            <div className="space-y-2 text-sm">
-              {watchedValues.groomParents && (
-                <p>신랑: {watchedValues.groomParents}</p>
-              )}
-              {watchedValues.brideParents && (
-                <p>신부: {watchedValues.brideParents}</p>
-              )}
-            </div>
-          </Card>
-        )}
-      </div>
 
       <div className="space-y-4">
-        {watchedValues.dressCode && (
+        {watchedValues.dress_code && (
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-2">드레스코드</h3>
-            <p className="text-sm text-gray-600">{watchedValues.dressCode}</p>
+            <p className="text-sm text-gray-600">{watchedValues.dress_code}</p>
           </Card>
         )}
 
-        {watchedValues.parkingInfo && (
+        {watchedValues.parking_info && (
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
               <Car className="h-4 w-4 mr-2" />
               주차 안내
             </h3>
-            <p className="text-sm text-gray-600">{watchedValues.parkingInfo}</p>
+            <p className="text-sm text-gray-600">{watchedValues.parking_info}</p>
           </Card>
         )}
 
-        {watchedValues.mealInfo && (
+        {watchedValues.meal_info && (
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
               <Utensils className="h-4 w-4 mr-2" />
               식사 정보
             </h3>
-            <p className="text-sm text-gray-600">{watchedValues.mealInfo}</p>
+            <p className="text-sm text-gray-600">{watchedValues.meal_info}</p>
           </Card>
         )}
 
-        {watchedValues.specialNotes && (
+        {watchedValues.special_notes && (
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-2">특별 안내사항</h3>
-            <p className="text-sm text-gray-600">{watchedValues.specialNotes}</p>
+            <p className="text-sm text-gray-600">{watchedValues.special_notes}</p>
           </Card>
         )}
 
-        {watchedValues.accountInfo && (
-          <Card className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
-              <CreditCard className="h-4 w-4 mr-2" />
-              계좌 정보
-            </h3>
-            <p className="text-sm text-gray-600 whitespace-pre-line">
-              {watchedValues.accountInfo}
-            </p>
-          </Card>
-        )}
       </div>
     </div>
   );

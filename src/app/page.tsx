@@ -537,7 +537,7 @@ export default function HomePage() {
                   className="w-full h-12 font-semibold"
                   variant="outline"
                 >
-                  <Link href="/contact">상담 문의하기</Link>
+                  <Link href={"/contact" as any}>상담 문의하기</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -676,7 +676,7 @@ export default function HomePage() {
           <div className="text-center mt-12">
             <p className="text-gray-600 mb-4">더 궁금한 점이 있으시나요?</p>
             <Button asChild variant="outline">
-              <Link href="/contact" className="flex items-center gap-2">
+              <Link href={"/contact" as any} className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4" />
                 문의하기
               </Link>
@@ -805,7 +805,7 @@ export default function HomePage() {
                   <Link href="/templates">무료 체험</Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/contact">문의하기</Link>
+                  <Link href={"/contact" as any}>문의하기</Link>
                 </Button>
               </div>
             </div>
@@ -842,7 +842,7 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Link
-                    href="/help"
+                    href={"/help" as any}
                     className="hover:text-white transition-colors flex items-center gap-2"
                   >
                     <ArrowRight className="w-4 h-4" />
@@ -857,7 +857,7 @@ export default function HomePage() {
               <ul className="space-y-3 text-gray-400">
                 <li>
                   <Link
-                    href="/contact"
+                    href={"/contact" as any}
                     className="hover:text-white transition-colors flex items-center gap-2"
                   >
                     <MessageCircle className="w-4 h-4" />
@@ -875,7 +875,7 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Link
-                    href="/privacy"
+                    href={"/privacy" as any}
                     className="hover:text-white transition-colors flex items-center gap-2"
                   >
                     <Shield className="w-4 h-4" />
@@ -884,7 +884,7 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Link
-                    href="/terms"
+                    href={"/terms" as any}
                     className="hover:text-white transition-colors flex items-center gap-2"
                   >
                     <ArrowRight className="w-4 h-4" />

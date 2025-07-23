@@ -21,7 +21,7 @@ export interface AuthSession {
   expiresAt: number;
 }
 
-// Auth context type for tRPC
+// Auth context type for Safe Actions
 export interface AuthContext {
   session: Session | null;
   user: SupabaseUser | null;

@@ -4,7 +4,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { BlockEditor } from '@/components/blocks/BlockEditor';
 import { useBlocks } from '@/hooks/useBlocks';
-import { api } from '@/lib/trpc';
+import {
+  getInvitationByIdAction,
+  createInvitationAction,
+  updateInvitationAction,
+} from '@/actions/safe-invitation-actions';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Block } from '@/types/blocks';
@@ -28,41 +32,34 @@ export function BlockBasedEditor({
   const [internalPreviewMode, setInternalPreviewMode] = useState(false);
   const currentPreviewMode = isPreviewMode ?? internalPreviewMode;
   const [isSaving, setIsSaving] = useState(false);
+  const [invitation, setInvitation] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // AIDEV-NOTE: 블록 상태 관리
   const { blocks, loadBlocks, validateBlocks, isDirty } =
     useBlocks(invitationId);
 
-  // AIDEV-NOTE: tRPC queries and mutations
-  const utils = api.useUtils();
+  // AIDEV-NOTE: 초대장 데이터 로드
+  useEffect(() => {
+    const loadInvitation = async () => {
+      if (!invitationId) return;
 
-  const { data: invitation, isLoading } = api.invitation.getById.useQuery(
-    { id: invitationId! },
-    { enabled: !!invitationId }
-  );
+      setIsLoading(true);
+      try {
+        const result = await getInvitationByIdAction({ id: invitationId });
+        if (result?.data) {
+          setInvitation(result.data);
+        }
+      } catch (error) {
+        console.error('Failed to load invitation:', error);
+        toast.error('청첩장을 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const createInvitationMutation = api.invitation.create.useMutation({
-    onSuccess: (data) => {
-      toast.success('청첩장이 생성되었습니다.');
-      // Redirect to editor with the new invitation ID
-      window.history.replaceState(null, '', `/invitation/edit?id=${data.id}`);
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const updateInvitationMutation = api.invitation.update.useMutation({
-    onSuccess: () => {
-      toast.success('청첩장이 저장되었습니다.');
-      utils.invitation.getById.invalidate({ id: invitationId! });
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : '저장 중 오류가 발생했습니다.'
-      );
-    },
-  });
+    loadInvitation();
+  }, [invitationId]);
 
   // AIDEV-NOTE: 블록 데이터 저장 핸들러
   const handleSave = useCallback(
@@ -76,34 +73,51 @@ export function BlockBasedEditor({
         const editorState = convertBlocksToEditorState(blocksToSave);
 
         if (invitationId) {
-          await updateInvitationMutation.mutateAsync({
+          const result = await updateInvitationAction({
             id: invitationId,
-            editorState,
+            data: editorState,
           });
+
+          if (result?.data) {
+            toast.success('청첩장이 저장되었습니다.');
+            setInvitation(result.data);
+          } else {
+            throw new Error(result?.serverError || '저장에 실패했습니다.');
+          }
         } else {
           // 새 초대장 생성
           const title = extractTitleFromBlocks(blocksToSave);
-          await createInvitationMutation.mutateAsync({
+          const result = await createInvitationAction({
             title,
-            templateId,
-            editorState,
+            template_id: templateId || '',
+            ...editorState,
           });
+
+          if (result?.data) {
+            toast.success('청첩장이 생성되었습니다.');
+            // Redirect to editor with the new invitation ID
+            window.history.replaceState(
+              null,
+              '',
+              `/invitation/edit?id=${result.data.invitation.id}`
+            );
+            setInvitation(result.data.invitation);
+          } else {
+            throw new Error(result?.serverError || '생성에 실패했습니다.');
+          }
         }
       } catch (error) {
         console.error('Save error:', error);
-        toast.error('저장 중 오류가 발생했습니다.');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : '저장 중 오류가 발생했습니다.'
+        );
       } finally {
         setIsSaving(false);
       }
     },
-    [
-      invitationId,
-      templateId,
-      validateBlocks,
-      isSaving,
-      updateInvitationMutation,
-      createInvitationMutation,
-    ]
+    [invitationId, templateId, validateBlocks, isSaving]
   );
 
   // AIDEV-NOTE: 기존 초대장 데이터를 블록 형태로 변환하여 로드
@@ -164,24 +178,6 @@ export function BlockBasedEditor({
       />
     </div>
   );
-}
-
-/**
- * Get category label in Korean
- */
-function getCategoryLabel(category: string): string {
-  switch (category) {
-    case 'classic':
-      return '클래식';
-    case 'modern':
-      return '모던';
-    case 'romantic':
-      return '로맨틱';
-    case 'minimal':
-      return '미니멀';
-    default:
-      return '기타';
-  }
 }
 
 // AIDEV-NOTE: 기존 editorState를 블록 배열로 변환
