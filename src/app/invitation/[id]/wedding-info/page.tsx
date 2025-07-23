@@ -9,7 +9,7 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
-import type { WeddingInfoFormData } from '@/lib/validations';
+import type { WeddingInfoFormData } from '@/lib/wedding-validations';
 
 export default function WeddingInfoPage() {
   const params = useParams();
@@ -57,13 +57,34 @@ export default function WeddingInfoPage() {
     loadWeddingInfo();
   }, [invitationId, user]);
 
+  // AIDEV-NOTE: camelCase에서 snake_case로 변환 함수
+  const convertToSnakeCase = (data: Partial<WeddingInfoFormData>) => {
+    const converted: any = {};
+    if (data.groomName !== undefined) converted.groom_name = data.groomName;
+    if (data.brideName !== undefined) converted.bride_name = data.brideName;
+    if (data.weddingDate !== undefined) converted.wedding_date = data.weddingDate;
+    if (data.weddingTime !== undefined) converted.wedding_time = data.weddingTime;
+    if (data.venueName !== undefined) converted.venue_name = data.venueName;
+    if (data.venueAddress !== undefined) converted.venue_address = data.venueAddress;
+    if (data.customMessage !== undefined) converted.custom_message = data.customMessage;
+    if (data.dressCode !== undefined) converted.dress_code = data.dressCode;
+    if (data.parkingInfo !== undefined) converted.parking_info = data.parkingInfo;
+    if (data.mealInfo !== undefined) converted.meal_info = data.mealInfo;
+    if (data.specialNotes !== undefined) converted.special_notes = data.specialNotes;
+    if (data.rsvpEnabled !== undefined) converted.rsvp_enabled = data.rsvpEnabled;
+    if (data.rsvpDeadline !== undefined) converted.rsvp_deadline = data.rsvpDeadline;
+    if (data.backgroundImageUrl !== undefined) converted.background_image_url = data.backgroundImageUrl;
+    return converted;
+  };
+
   // 임시 저장 (부분 업데이트)
   const handleSave = async (data: Partial<WeddingInfoFormData>) => {
     setIsUpdating(true);
     try {
+      const convertedData = convertToSnakeCase(data);
       const result = await updateInvitationAction({
         id: invitationId,
-        data: data,
+        data: convertedData,
       });
 
       if (result?.data) {
@@ -86,9 +107,10 @@ export default function WeddingInfoPage() {
   const handleSubmit = async (data: WeddingInfoFormData) => {
     setIsUpdating(true);
     try {
+      const convertedData = convertToSnakeCase(data);
       const result = await updateInvitationAction({
         id: invitationId,
-        data: data,
+        data: convertedData,
       });
 
       if (result?.data) {

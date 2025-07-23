@@ -3,14 +3,19 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BlockBasedEditor } from '@/components/invitation/BlockBasedEditor';
+import { WeddingInfoForm } from '@/components/wedding/WeddingInfoForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getTemplateByIdAction } from '@/actions/safe-template-actions';
-import { ArrowLeft, Save, Eye } from 'lucide-react';
+import { createInvitationAction } from '@/actions/safe-invitation-actions';
+import { ArrowLeft, Save, Eye, ChevronRight, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Template } from '@/types';
+import type { WeddingInfoFormData } from '@/lib/wedding-validations';
 
-// AIDEV-NOTE: 청첩장 생성 페이지 - 템플릿 기반 블록 에디터 사용
+// AIDEV-NOTE: 청첩장 생성 페이지 - 2단계 청첩장 생성 플로우 (결혼식 정보 → 블록 편집)
+
+type CreateStep = 'wedding-info' | 'editing';
 
 function CreateInvitationContent() {
   const router = useRouter();
@@ -20,9 +25,12 @@ function CreateInvitationContent() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null
   );
+  const [currentStep, setCurrentStep] = useState<CreateStep>('wedding-info');
+  const [weddingInfo, setWeddingInfo] = useState<WeddingInfoFormData | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
   const [templateError, setTemplateError] = useState<Error | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // 템플릿 정보 가져오기
   useEffect(() => {
@@ -64,9 +72,66 @@ function CreateInvitationContent() {
     router.push('/templates');
   };
 
-  const handleSave = () => {
-    // TODO: 청첩장 저장 로직 구현
-    console.log('청첩장 저장');
+  // AIDEV-NOTE: camelCase에서 snake_case로 변환 (Safe Action 호환)
+  const convertWeddingInfoToSnakeCase = (data: WeddingInfoFormData) => {
+    return {
+      title: `${data.groomName} ❤ ${data.brideName}의 결혼식`,
+      groom_name: data.groomName,
+      bride_name: data.brideName,
+      wedding_date: data.weddingDate,
+      wedding_time: data.weddingTime,
+      venue_name: data.venueName,
+      venue_address: data.venueAddress,
+      template_id: templateId!,
+      custom_message: data.customMessage || '',
+      dress_code: data.dressCode || '',
+      parking_info: data.parkingInfo || '',
+      meal_info: data.mealInfo || '',
+      special_notes: data.specialNotes || '',
+      rsvp_enabled: data.rsvpEnabled,
+      rsvp_deadline: data.rsvpDeadline || '',
+      background_image_url: data.backgroundImageUrl || '',
+    };
+  };
+
+  // 결혼식 정보 제출 핸들러
+  const handleWeddingInfoSubmit = (data: WeddingInfoFormData) => {
+    setWeddingInfo(data);
+    setCurrentStep('editing');
+    toast.success('결혼식 정보가 입력되었습니다. 이제 청첩장을 꾸며보세요!');
+  };
+
+  // 청첩장 저장 핸들러 
+  const handleSave = async () => {
+    if (!weddingInfo || !templateId) {
+      toast.error('결혼식 정보가 없습니다.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const invitationData = convertWeddingInfoToSnakeCase(weddingInfo);
+      const result = await createInvitationAction(invitationData);
+
+      if (result?.data) {
+        toast.success('청첩장이 성공적으로 생성되었습니다!');
+        router.push(`/dashboard`);
+      } else {
+        throw new Error(result?.serverError || '청첩장 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to create invitation:', error);
+      toast.error('청첩장 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 이전 단계로 돌아가기
+  const handlePrevStep = () => {
+    if (currentStep === 'editing') {
+      setCurrentStep('wedding-info');
+    }
   };
 
   const togglePreview = () => {
@@ -142,34 +207,56 @@ function CreateInvitationContent() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleBack}
+                onClick={currentStep === 'wedding-info' ? handleBack : handlePrevStep}
                 className="gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
-                돌아가기
+                {currentStep === 'wedding-info' ? '템플릿 선택' : '결혼식 정보'}
               </Button>
               <div className="border-l pl-4">
                 <h1 className="font-semibold">청첩장 만들기</h1>
                 <p className="text-sm text-muted-foreground">
-                  {selectedTemplate.name} 템플릿
+                  {currentStep === 'wedding-info' ? '1단계: 결혼식 정보 입력' : '2단계: 청첩장 편집'}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={togglePreview}
-                className="gap-2"
-              >
-                <Eye className="w-4 h-4" />
-                {isPreviewMode ? '편집' : '미리보기'}
-              </Button>
-              <Button size="sm" onClick={handleSave} className="gap-2">
-                <Save className="w-4 h-4" />
-                저장
-              </Button>
+            {/* Progress indicator */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-sm">
+                <div className={`w-2 h-2 rounded-full ${currentStep === 'wedding-info' ? 'bg-blue-600' : 'bg-green-600'}`} />
+                <span className={currentStep === 'wedding-info' ? 'text-blue-600 font-medium' : 'text-muted-foreground'}>
+                  결혼식 정보
+                </span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                <div className={`w-2 h-2 rounded-full ${currentStep === 'editing' ? 'bg-blue-600' : 'bg-muted'}`} />
+                <span className={currentStep === 'editing' ? 'text-blue-600 font-medium' : 'text-muted-foreground'}>
+                  청첩장 편집
+                </span>
+              </div>
+
+              {currentStep === 'editing' && (
+                <div className="flex items-center gap-2 border-l pl-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={togglePreview}
+                    className="gap-2"
+                  >
+                    <Eye className="w-4 h-4" />
+                    {isPreviewMode ? '편집' : '미리보기'}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={handleSave} 
+                    className="gap-2"
+                    disabled={isSaving}
+                  >
+                    <Save className="w-4 h-4" />
+                    {isSaving ? '저장 중...' : '청첩장 생성'}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -177,118 +264,103 @@ function CreateInvitationContent() {
 
       {/* Main Content */}
       <div className="container mx-auto py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Editor Area */}
-          <div className="lg:col-span-3">
+        {currentStep === 'wedding-info' ? (
+          // Step 1: Wedding Info Form
+          <div className="max-w-4xl mx-auto">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{isPreviewMode ? '미리보기' : '편집기'}</span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {selectedTemplate.name}
+              <CardHeader className="text-center pb-6">
+                <CardTitle className="text-2xl">결혼식 정보 입력</CardTitle>
+                <p className="text-muted-foreground">
+                  청첩장에 표시될 결혼식 정보를 입력해주세요
+                </p>
+                <div className="flex items-center justify-center gap-2 mt-4 p-3 bg-blue-50 rounded-lg">
+                  <Info className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm text-blue-700">
+                    선택한 템플릿: <strong>{selectedTemplate.name}</strong>
                   </span>
-                </CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
-                <BlockBasedEditor
-                  template={selectedTemplate}
-                  isPreviewMode={isPreviewMode}
+                <WeddingInfoForm
+                  onSubmit={handleWeddingInfoSubmit}
+                  isLoading={false}
                 />
               </CardContent>
             </Card>
           </div>
+        ) : (
+          // Step 2: Block Editor
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Editor Area */}
+            <div className="lg:col-span-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{isPreviewMode ? '미리보기' : '편집기'}</span>
+                    <span className="text-sm font-normal text-muted-foreground">
+                      {selectedTemplate.name}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BlockBasedEditor
+                    template={selectedTemplate}
+                    weddingInfo={weddingInfo || undefined}
+                    isPreviewMode={isPreviewMode}
+                  />
+                </CardContent>
+              </Card>
+            </div>
 
-          {/* Sidebar */}
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">템플릿 정보</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">템플릿 이름</label>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedTemplate.name}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">카테고리</label>
-                  <p className="text-sm text-muted-foreground">
-                    {getCategoryLabel(selectedTemplate.category)}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">스타일</label>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    {selectedTemplate.cssStyles &&
-                      typeof selectedTemplate.cssStyles === 'object' && (
-                        <>
-                          {(selectedTemplate.cssStyles as any).primaryColor && (
-                            <div className="flex items-center gap-2">
-                              <span>주 색상:</span>
-                              <div
-                                className="w-4 h-4 rounded border"
-                                style={{
-                                  backgroundColor: (
-                                    selectedTemplate.cssStyles as any
-                                  ).primaryColor,
-                                }}
-                              />
-                              <span className="text-xs">
-                                {
-                                  (selectedTemplate.cssStyles as any)
-                                    .primaryColor
-                                }
-                              </span>
-                            </div>
-                          )}
-                          {(selectedTemplate.cssStyles as any).fontFamily && (
-                            <div>
-                              폰트:{' '}
-                              {(selectedTemplate.cssStyles as any).fontFamily}
-                            </div>
-                          )}
-                        </>
-                      )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Sidebar */}
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">결혼식 정보</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {weddingInfo && (
+                    <>
+                      <div>
+                        <label className="text-sm font-medium">신랑신부</label>
+                        <p className="text-sm text-muted-foreground">
+                          {weddingInfo.groomName} ❤ {weddingInfo.brideName}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">예식일시</label>
+                        <p className="text-sm text-muted-foreground">
+                          {weddingInfo.weddingDate} {weddingInfo.weddingTime}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">예식장</label>
+                        <p className="text-sm text-muted-foreground">
+                          {weddingInfo.venueName}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">도움말</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm text-muted-foreground">
-                <p>• 블록을 클릭하여 내용을 편집할 수 있습니다</p>
-                <p>• 블록 순서를 변경하려면 드래그하세요</p>
-                <p>• 새로운 블록을 추가하려면 + 버튼을 클릭하세요</p>
-                <p>• 미리보기로 최종 결과를 확인하세요</p>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">도움말</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <p>• 블록을 클릭하여 내용을 편집할 수 있습니다</p>
+                  <p>• 블록 순서를 변경하려면 드래그하세요</p>
+                  <p>• 새로운 블록을 추가하려면 + 버튼을 클릭하세요</p>
+                  <p>• 미리보기로 최종 결과를 확인하세요</p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
-}
-
-/**
- * Get category label in Korean
- */
-function getCategoryLabel(category: string): string {
-  switch (category) {
-    case 'classic':
-      return '클래식';
-    case 'modern':
-      return '모던';
-    case 'romantic':
-      return '로맨틱';
-    case 'minimal':
-      return '미니멀';
-    default:
-      return '기타';
-  }
 }
 
 export default function CreateInvitationPage() {

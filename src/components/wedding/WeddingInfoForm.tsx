@@ -9,8 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import {
   MapPin,
-  Phone,
-  Users,
   MessageCircle,
   Settings,
   Save,
@@ -20,7 +18,6 @@ import {
   Heart,
   Car,
   Utensils,
-  CreditCard,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -29,7 +26,7 @@ import { toast } from 'sonner';
 import {
   weddingInfoSchema,
   type WeddingInfoFormData,
-} from '@/lib/validations';
+} from '@/lib/wedding-validations';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -57,7 +54,7 @@ const FORM_SECTIONS: FormSection[] = [
     title: '기본 정보',
     icon: <Heart className="h-5 w-5" />,
     description: '신랑신부와 결혼식 기본 정보를 입력하세요.',
-    fields: ['groom_name', 'bride_name', 'wedding_date', 'wedding_time'],
+    fields: ['groomName', 'brideName', 'weddingDate', 'weddingTime'],
     expanded: true,
   },
   {
@@ -65,7 +62,7 @@ const FORM_SECTIONS: FormSection[] = [
     title: '예식장 정보',
     icon: <MapPin className="h-5 w-5" />,
     description: '결혼식이 열릴 장소 정보를 입력하세요.',
-    fields: ['venue_name', 'venue_address'],
+    fields: ['venueName', 'venueAddress'],
     expanded: true,
   },
   {
@@ -73,7 +70,7 @@ const FORM_SECTIONS: FormSection[] = [
     title: '초대 메시지',
     icon: <MessageCircle className="h-5 w-5" />,
     description: '하객들에게 전달할 메시지를 입력하세요.',
-    fields: ['custom_message'],
+    fields: ['customMessage'],
     expanded: false,
   },
   {
@@ -81,7 +78,7 @@ const FORM_SECTIONS: FormSection[] = [
     title: '추가 정보',
     icon: <Info className="h-5 w-5" />,
     description: '드레스코드, 주차 안내 등 추가 정보를 입력하세요.',
-    fields: ['dress_code', 'parking_info', 'meal_info', 'special_notes'],
+    fields: ['dressCode', 'parkingInfo', 'mealInfo', 'specialNotes'],
     expanded: false,
   },
   {
@@ -89,7 +86,7 @@ const FORM_SECTIONS: FormSection[] = [
     title: 'RSVP 설정',
     icon: <MessageCircle className="h-5 w-5" />,
     description: '참석 여부 확인 기능을 설정하세요.',
-    fields: ['rsvp_enabled', 'rsvp_deadline'],
+    fields: ['rsvpEnabled', 'rsvpDeadline'],
     expanded: false,
   },
   {
@@ -97,32 +94,32 @@ const FORM_SECTIONS: FormSection[] = [
     title: '기타 설정',
     icon: <Settings className="h-5 w-5" />,
     description: '계좌 정보, 배경 이미지 등을 설정하세요.',
-    fields: ['background_image_url'],
+    fields: ['backgroundImageUrl'],
     expanded: false,
   },
 ];
 
-// AIDEV-NOTE: 폼 필드 설정 - 각 필드의 타입과 레이블 정의
+// AIDEV-NOTE: 폼 필드 설정 - 각 필드의 타입과 레이블 정의 (camelCase 사용)
 const FORM_FIELD_CONFIG: Record<string, { 
   type: 'text' | 'date' | 'time' | 'textarea' | 'checkbox' | 'url';
   label: string;
   placeholder?: string;
   required?: boolean;
 }> = {
-  groom_name: { type: 'text', label: '신랑 이름', placeholder: '신랑 이름을 입력하세요', required: true },
-  bride_name: { type: 'text', label: '신부 이름', placeholder: '신부 이름을 입력하세요', required: true },
-  wedding_date: { type: 'date', label: '결혼식 날짜', required: true },
-  wedding_time: { type: 'time', label: '결혼식 시간', required: true },
-  venue_name: { type: 'text', label: '예식장 이름', placeholder: '예식장 이름을 입력하세요', required: true },
-  venue_address: { type: 'text', label: '예식장 주소', placeholder: '예식장 주소를 입력하세요', required: true },
-  custom_message: { type: 'textarea', label: '초대 메시지', placeholder: '하객들에게 전달할 메시지를 입력하세요' },
-  dress_code: { type: 'text', label: '드레스코드', placeholder: '드레스코드를 입력하세요' },
-  parking_info: { type: 'textarea', label: '주차 안내', placeholder: '주차 정보를 입력하세요' },
-  meal_info: { type: 'textarea', label: '식사 안내', placeholder: '식사 정보를 입력하세요' },
-  special_notes: { type: 'textarea', label: '특별 안내', placeholder: '특별 안내사항을 입력하세요' },
-  rsvp_enabled: { type: 'checkbox', label: 'RSVP 활성화' },
-  rsvp_deadline: { type: 'date', label: 'RSVP 마감일' },
-  background_image_url: { type: 'url', label: '배경 이미지 URL', placeholder: 'https://...' },
+  groomName: { type: 'text', label: '신랑 이름', placeholder: '신랑 이름을 입력하세요', required: true },
+  brideName: { type: 'text', label: '신부 이름', placeholder: '신부 이름을 입력하세요', required: true },
+  weddingDate: { type: 'date', label: '결혼식 날짜', required: true },
+  weddingTime: { type: 'time', label: '결혼식 시간', required: true },
+  venueName: { type: 'text', label: '예식장 이름', placeholder: '예식장 이름을 입력하세요', required: true },
+  venueAddress: { type: 'text', label: '예식장 주소', placeholder: '예식장 주소를 입력하세요', required: true },
+  customMessage: { type: 'textarea', label: '초대 메시지', placeholder: '하객들에게 전달할 메시지를 입력하세요' },
+  dressCode: { type: 'text', label: '드레스코드', placeholder: '드레스코드를 입력하세요' },
+  parkingInfo: { type: 'textarea', label: '주차 안내', placeholder: '주차 정보를 입력하세요' },
+  mealInfo: { type: 'textarea', label: '식사 안내', placeholder: '식사 정보를 입력하세요' },
+  specialNotes: { type: 'textarea', label: '특별 안내', placeholder: '특별 안내사항을 입력하세요' },
+  rsvpEnabled: { type: 'checkbox', label: 'RSVP 활성화' },
+  rsvpDeadline: { type: 'date', label: 'RSVP 마감일' },
+  backgroundImageUrl: { type: 'url', label: '배경 이미지 URL', placeholder: 'https://...' },
 };
 
 // AIDEV-NOTE: 유틸리티 함수들
@@ -162,25 +159,24 @@ export function WeddingInfoForm({
     register,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors, isDirty, isValid },
   } = useForm<WeddingInfoFormData>({
     resolver: zodResolver(weddingInfoSchema) as any,
     defaultValues: {
-      groom_name: initialData?.groom_name || '',
-      bride_name: initialData?.bride_name || '',
-      wedding_date: initialData?.wedding_date || '',
-      wedding_time: initialData?.wedding_time || '',
-      venue_name: initialData?.venue_name || '',
-      venue_address: initialData?.venue_address || '',
-      custom_message: initialData?.custom_message || '',
-      dress_code: initialData?.dress_code || '',
-      parking_info: initialData?.parking_info || '',
-      meal_info: initialData?.meal_info || '',
-      special_notes: initialData?.special_notes || '',
-      rsvp_enabled: initialData?.rsvp_enabled ?? true,
-      rsvp_deadline: initialData?.rsvp_deadline || '',
-      background_image_url: initialData?.background_image_url || '',
+      groomName: initialData?.groomName || '',
+      brideName: initialData?.brideName || '',
+      weddingDate: initialData?.weddingDate || '',
+      weddingTime: initialData?.weddingTime || '',
+      venueName: initialData?.venueName || '',
+      venueAddress: initialData?.venueAddress || '',
+      customMessage: initialData?.customMessage || '',
+      dressCode: initialData?.dressCode || '',
+      parkingInfo: initialData?.parkingInfo || '',
+      mealInfo: initialData?.mealInfo || '',
+      specialNotes: initialData?.specialNotes || '',
+      rsvpEnabled: initialData?.rsvpEnabled ?? true,
+      rsvpDeadline: initialData?.rsvpDeadline || '',
+      backgroundImageUrl: initialData?.backgroundImageUrl || '',
     },
     mode: 'onChange',
   });
@@ -306,73 +302,73 @@ export function WeddingInfoForm({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          {watchedValues.groom_name && watchedValues.bride_name
-            ? `${watchedValues.groom_name} ❤ ${watchedValues.bride_name}`
+          {watchedValues.groomName && watchedValues.brideName
+            ? `${watchedValues.groomName} ❤ ${watchedValues.brideName}`
             : '신랑 ❤ 신부'}
         </h2>
-        {watchedValues.wedding_date && (
+        {watchedValues.weddingDate && (
           <p className="text-lg text-gray-600 mb-1">
-            {formatDate(watchedValues.wedding_date)}
+            {formatDate(watchedValues.weddingDate)}
           </p>
         )}
-        {watchedValues.wedding_time && (
+        {watchedValues.weddingTime && (
           <p className="text-lg text-gray-600 mb-4">
-            {formatTime(watchedValues.wedding_time)}
+            {formatTime(watchedValues.weddingTime)}
           </p>
         )}
-        {watchedValues.venue_name && (
+        {watchedValues.venueName && (
           <p className="text-lg text-gray-700 font-medium">
-            {watchedValues.venue_name}
+            {watchedValues.venueName}
           </p>
         )}
-        {watchedValues.venue_address && (
+        {watchedValues.venueAddress && (
           <p className="text-sm text-gray-600 mt-2">
-            {watchedValues.venue_address}
+            {watchedValues.venueAddress}
           </p>
         )}
       </div>
 
-      {watchedValues.custom_message && (
+      {watchedValues.customMessage && (
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <p className="text-gray-700 text-center leading-relaxed">
-            {watchedValues.custom_message}
+            {watchedValues.customMessage}
           </p>
         </div>
       )}
 
 
       <div className="space-y-4">
-        {watchedValues.dress_code && (
+        {watchedValues.dressCode && (
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-2">드레스코드</h3>
-            <p className="text-sm text-gray-600">{watchedValues.dress_code}</p>
+            <p className="text-sm text-gray-600">{watchedValues.dressCode}</p>
           </Card>
         )}
 
-        {watchedValues.parking_info && (
+        {watchedValues.parkingInfo && (
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
               <Car className="h-4 w-4 mr-2" />
               주차 안내
             </h3>
-            <p className="text-sm text-gray-600">{watchedValues.parking_info}</p>
+            <p className="text-sm text-gray-600">{watchedValues.parkingInfo}</p>
           </Card>
         )}
 
-        {watchedValues.meal_info && (
+        {watchedValues.mealInfo && (
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
               <Utensils className="h-4 w-4 mr-2" />
               식사 정보
             </h3>
-            <p className="text-sm text-gray-600">{watchedValues.meal_info}</p>
+            <p className="text-sm text-gray-600">{watchedValues.mealInfo}</p>
           </Card>
         )}
 
-        {watchedValues.special_notes && (
+        {watchedValues.specialNotes && (
           <Card className="p-4">
             <h3 className="font-semibold text-gray-900 mb-2">특별 안내사항</h3>
-            <p className="text-sm text-gray-600">{watchedValues.special_notes}</p>
+            <p className="text-sm text-gray-600">{watchedValues.specialNotes}</p>
           </Card>
         )}
 
