@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -63,7 +64,7 @@ export function ImageGallery({
       if (result?.data) {
         setImagesData({ images: result.data.files });
       }
-    } catch (error) {
+    } catch {
       toast.error('이미지 목록을 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
@@ -129,7 +130,7 @@ export function ImageGallery({
       setCopiedUrl(url);
       toast.success('URL이 클립보드에 복사되었습니다.');
       setTimeout(() => setCopiedUrl(null), 2000);
-    } catch (error) {
+    } catch {
       toast.error('URL 복사에 실패했습니다.');
     }
   };
@@ -224,9 +225,10 @@ export function ImageGallery({
               onClick={() => handleImageSelect(image)}
             >
               <div className="aspect-square bg-gray-100">
-                <img
+                <Image
                   src={image.url}
                   alt={image.name}
+                  fill
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -311,9 +313,10 @@ export function ImageGallery({
               onClick={() => handleImageSelect(image)}
             >
               <div className="flex-shrink-0">
-                <img
+                <Image
                   src={image.url}
                   alt={image.name}
+                  fill
                   className="w-16 h-16 object-cover rounded-md"
                 />
               </div>

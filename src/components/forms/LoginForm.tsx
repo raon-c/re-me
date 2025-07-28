@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { loginAction } from '@/actions/safe-auth-actions';
-import { useSafeAction } from '@/hooks/useSafeAction';
 import { toast } from 'sonner';
 
 // AIDEV-NOTE: Example login form using safe actions with proper error handling
@@ -50,7 +49,7 @@ export function LoginForm({ onSuccess, className }: LoginFormProps) {
       } else {
         toast.error(result?.serverError || '로그인에 실패했습니다.');
       }
-    } catch (error) {
+    } catch {
       toast.error('로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);

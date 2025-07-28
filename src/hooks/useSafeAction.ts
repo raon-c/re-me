@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { useAction } from 'next-safe-action/hooks';
 import type { SafeActionResult } from '@/lib/safe-action';
 
 // AIDEV-NOTE: Custom hook for using safe actions with better UX

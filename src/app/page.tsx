@@ -355,7 +355,7 @@ export default function HomePage() {
                 count: '4개',
                 description: '깔끔하고 심플한',
               },
-            ].map((category, index) => (
+            ].map((category) => (
               <Card
                 key={category.name}
                 className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer group overflow-hidden"
@@ -589,7 +589,7 @@ export default function HomePage() {
                     ))}
                   </div>
                   <p className="text-gray-600 mb-4 italic">
-                    "{testimonial.content}&quot;
+                    &ldquo;{testimonial.content}&rdquo;
                   </p>
                   <p className="font-semibold text-gray-900">
                     - {testimonial.name}

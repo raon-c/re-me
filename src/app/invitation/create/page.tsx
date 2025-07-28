@@ -22,15 +22,13 @@ function CreateInvitationContent() {
   const searchParams = useSearchParams();
   const templateId = searchParams.get('template');
 
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
-    null
-  );
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [currentStep, setCurrentStep] = useState<CreateStep>('wedding-info');
   const [weddingInfo, setWeddingInfo] = useState<WeddingInfoFormData | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
-  const [templateError, setTemplateError] = useState<Error | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
 
   // 템플릿 정보 가져오기
   useEffect(() => {
@@ -38,20 +36,21 @@ function CreateInvitationContent() {
       if (!templateId) return;
 
       setIsTemplateLoading(true);
+      setTemplateError(null);
+      
       try {
         const result = await getTemplateByIdAction({ id: templateId });
         if (result?.data) {
           setSelectedTemplate(result.data as Template);
         } else {
-          throw new Error(
-            result?.serverError || '템플릿을 불러올 수 없습니다.'
-          );
+          const errorMessage = result?.serverError || '템플릿을 불러올 수 없습니다.';
+          setTemplateError(errorMessage);
+          toast.error(errorMessage);
         }
       } catch (error) {
         console.error('Failed to load template:', error);
-        setTemplateError(
-          error instanceof Error ? error : new Error('알 수 없는 오류')
-        );
+        const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+        setTemplateError(errorMessage);
         toast.error('템플릿을 불러오는데 실패했습니다.');
       } finally {
         setIsTemplateLoading(false);

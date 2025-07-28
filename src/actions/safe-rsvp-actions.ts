@@ -8,7 +8,7 @@ import type { Database } from '@/types/database';
 // AIDEV-NOTE: Safe Action implementations for RSVP management with enhanced security
 // Handles guest responses, attendance tracking, and data export with proper validation
 
-type RsvpResponse = Database['public']['Tables']['rsvp_responses']['Row'];
+// type RsvpResponse = Database['public']['Tables']['rsvp_responses']['Row']; // 추후 사용 예정
 type RsvpResponseInsert = Database['public']['Tables']['rsvp_responses']['Insert'];
 
 // RSVP validation schemas

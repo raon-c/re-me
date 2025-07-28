@@ -2,6 +2,7 @@
 
 // AIDEV-NOTE: 이미지 블록 - 이미지 업로드 및 표시
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { BaseBlock } from './BaseBlock';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -205,9 +206,11 @@ export function ImageBlock({
           {/* AIDEV-NOTE: 이미지 미리보기 */}
           {localData.imageUrl && (
             <div className="border border-gray-200 rounded-lg p-2">
-              <img
+              <Image
                 src={localData.imageUrl}
                 alt={localData.alt || ''}
+                width={400}
+                height={128}
                 className="w-full h-32 object-cover rounded"
               />
             </div>
@@ -275,10 +278,11 @@ export function ImageBlock({
           {block.data.imageUrl ? (
             <div className="relative">
               <div className={`relative overflow-hidden rounded-lg ${getAspectRatioClass(block.data.aspectRatio || 'landscape')}`}>
-                <img
+                <Image
                   src={block.data.imageUrl}
                   alt={block.data.alt || ''}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               </div>
               

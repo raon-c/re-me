@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { actionClient, authActionClient } from '@/lib/safe-action';
+import { authActionClient } from '@/lib/safe-action';
 
 // AIDEV-NOTE: Safe Action implementations for file upload with security and validation
 // Handles image uploads to Supabase Storage with proper authentication and file validation
@@ -80,7 +80,7 @@ export const uploadImageAction = authActionClient
     const filePath = `${folder}/${uniqueFileName}`;
 
     // Supabase Storage에 파일 업로드
-    const { data: uploadData, error: uploadError } = await ctx.supabase.storage
+    const { error: uploadError } = await ctx.supabase.storage
       .from('images')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -171,7 +171,7 @@ export const uploadMultipleImagesAction = authActionClient
         const uniqueFileName = generateUniqueFileName(file.name, ctx.user.id);
         const filePath = `${folder}/${uniqueFileName}`;
 
-        const { data: uploadData, error: uploadError } = await ctx.supabase.storage
+        const { error: uploadError } = await ctx.supabase.storage
           .from('images')
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -193,7 +193,7 @@ export const uploadMultipleImagesAction = authActionClient
           path: filePath,
           originalName: file.name,
         });
-      } catch (error) {
+      } catch {
         errors.push(`${file.name}: 처리 중 오류`);
       }
     }

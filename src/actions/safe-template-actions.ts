@@ -161,7 +161,8 @@ export const getPopularTemplatesAction = actionClient
 
     // invitations 필드를 제거하고 Template[] 타입으로 반환
     const cleanTemplates: Template[] = (templates || []).map(template => {
-      const { invitations, ...cleanTemplate } = template as any;
+      const { invitations, ...cleanTemplate } = template as Template & { invitations?: unknown };
+      void invitations; // 사용하지 않는 변수 명시적 처리
       return cleanTemplate;
     });
 

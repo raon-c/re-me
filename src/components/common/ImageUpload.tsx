@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useCallback, useState } from 'react';
+import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Upload,
   X,
@@ -103,13 +102,6 @@ export function ImageUpload({
     }
   }, [deleteImage, onImageRemoved]);
 
-  // 업로드 취소
-  const handleCancel = useCallback(() => {
-    setSelectedFile(null);
-    setPreviewImages([]);
-    resetUploadState();
-  }, [resetUploadState]);
-
   // 파일 선택 취소
   const handleCancelSelection = useCallback(() => {
     setSelectedFile(null);
@@ -151,9 +143,11 @@ export function ImageUpload({
             ) : previewImages.length > 0 ? (
               <div className="space-y-4">
                 <div className="relative inline-block">
-                  <img
+                  <Image
                     src={previewImages[0]}
                     alt="미리보기"
+                    width={200}
+                    height={160}
                     className="max-h-40 rounded-lg shadow-md"
                   />
                   <button
@@ -222,10 +216,11 @@ export function ImageUpload({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="relative group">
               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                <img
+                <Image
                   src={uploadedImage.url}
                   alt={uploadedImage.originalName}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               </div>
               

@@ -1,3 +1,6 @@
+import { ComponentType } from 'react';
+import type { Block } from '@/types/blocks';
+
 // AIDEV-NOTE: 블록 컴포넌트 통합 Export
 export { BaseBlock } from './BaseBlock';
 export { HeaderBlock } from './HeaderBlock';
@@ -8,9 +11,6 @@ export { LocationBlock } from './LocationBlock';
 export { RsvpBlock } from './RsvpBlock';
 
 // AIDEV-NOTE: 블록 타입에 따른 동적 컴포넌트 렌더링
-import { ComponentType } from 'react';
-import type { Block } from '@/types/blocks';
-
 import { HeaderBlock } from './HeaderBlock';
 import { ContentBlock } from './ContentBlock';
 import { ImageBlock } from './ImageBlock';

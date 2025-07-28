@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -154,6 +154,8 @@ export function WeddingInfoForm({
     new Set(FORM_SECTIONS.filter(s => s.expanded).map(s => s.id))
   );
   const [previewMode, setPreviewMode] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const {
     register,
@@ -182,6 +184,46 @@ export function WeddingInfoForm({
   });
 
   const watchedValues = watch();
+
+  // 자동 저장 기능
+  useEffect(() => {
+    if (!onSave || !isDirty) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        setAutoSaveStatus('saving');
+        setHasUnsavedChanges(true);
+        await onSave(watchedValues);
+        setAutoSaveStatus('saved');
+        setHasUnsavedChanges(false);
+        
+        // 2초 후 상태 초기화
+        setTimeout(() => {
+          setAutoSaveStatus('idle');
+        }, 2000);
+      } catch {
+        setAutoSaveStatus('error');
+        setTimeout(() => {
+          setAutoSaveStatus('idle');
+        }, 3000);
+      }
+    }, 1500); // 1.5초 디바운스
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedValues, isDirty, onSave]);
+
+  // 페이지 이탈 시 경고
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '저장되지 않은 변경사항이 있습니다. 페이지를 떠나시겠습니까?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // 섹션 확장/축소 토글
   const toggleSection = (sectionId: string) => {
@@ -382,9 +424,34 @@ export function WeddingInfoForm({
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">결혼식 정보</h1>
-          <p className="text-gray-600 mt-1">
-            청첩장에 표시될 결혼식 정보를 입력하세요
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-gray-600">
+              청첩장에 표시될 결혼식 정보를 입력하세요
+            </p>
+            {/* 자동 저장 상태 */}
+            {autoSaveStatus !== 'idle' && (
+              <div className="flex items-center gap-2 text-sm">
+                {autoSaveStatus === 'saving' && (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                    <span className="text-blue-600">저장 중...</span>
+                  </>
+                )}
+                {autoSaveStatus === 'saved' && (
+                  <>
+                    <div className="h-3 w-3 bg-green-500 rounded-full"></div>
+                    <span className="text-green-600">자동 저장됨</span>
+                  </>
+                )}
+                {autoSaveStatus === 'error' && (
+                  <>
+                    <div className="h-3 w-3 bg-red-500 rounded-full"></div>
+                    <span className="text-red-600">저장 실패</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <Button

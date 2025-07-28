@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { actionClient, authActionClient, commonSchemas } from '@/lib/safe-action';
+import { actionClient, authActionClient } from '@/lib/safe-action';
 import {
   registerSchema,
   loginSchema,
