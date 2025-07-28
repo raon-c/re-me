@@ -5,7 +5,14 @@ import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import type { Block, BlockStyles } from '@/types/blocks';
 import { Button } from '@/components/ui/button';
-import { Trash2, Edit3, Copy, ArrowUp, ArrowDown, Settings, Check, X } from 'lucide-react';
+import {
+  Trash2,
+  Edit3,
+  Copy,
+  ArrowUp,
+  ArrowDown,
+  Settings,
+} from 'lucide-react';
 
 interface BaseBlockProps {
   block: Block;
@@ -123,9 +130,9 @@ export function BaseBlock({
   }
 
   return (
-    <div 
+    <div
       className={cn(
-        'relative group transition-all duration-200 w-full overflow-hidden',
+        'relative group transition-all duration-200 overflow-hidden',
         'border-2 border-transparent rounded-lg',
         !isEditing && 'hover:border-blue-200',
         isEditing && 'border-blue-400 bg-blue-50 shadow-sm',
@@ -138,7 +145,7 @@ export function BaseBlock({
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
           {/* 반투명 오버레이 배경 */}
           <div className="absolute inset-0 bg-black bg-opacity-10 rounded-lg" />
-          
+
           {/* 툴바 컨테이너 */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="flex flex-wrap gap-1 sm:gap-2 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5 sm:p-2 pointer-events-auto max-w-xs">
@@ -219,40 +226,13 @@ export function BaseBlock({
 
       {/* AIDEV-NOTE: 편집 모드 UI */}
       {isEditing && (
-        <>
-          {/* 블록 타입 표시 */}
-          <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded z-10">
-            {block.type} 편집 중
-          </div>
-          
-          {/* 편집 완료 버튼들 */}
-          <div className="absolute top-2 right-2 flex gap-1 z-10">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onEdit}
-              className="h-7 w-7 p-0 bg-green-500 hover:bg-green-600 text-white"
-              title="편집 완료"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onEdit}
-              className="h-7 w-7 p-0 bg-gray-500 hover:bg-gray-600 text-white"
-              title="편집 취소"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </>
+        <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded z-10">
+          {block.type} 편집 중
+        </div>
       )}
 
       {/* AIDEV-NOTE: 블록 내용 - 전체 너비 사용 */}
-      <div className="w-full">
-        {children}
-      </div>
+      <div className="w-full">{children}</div>
     </div>
   );
 }
