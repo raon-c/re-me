@@ -772,3 +772,150 @@ When responding to user instructions, follow this process:
 - **Package locks**: `package-lock.json` (auto-generated)
 
 **When adding new files or directories**, ensure they follow the established patterns and don't conflict with existing structure.
+
+---
+
+## 17. AI Development Team Configuration
+
+_Updated by team-configurator on 2025-07-28_
+
+Your project uses: __Next.js 15, TypeScript, Supabase, Next-Safe-Action 8+, Tailwind CSS__
+
+### Current Available Specialists
+
+- **@code-reviewer** - Expert code quality assurance and best practices
+
+### Recommended Task Routing
+
+#### 🏗️ API & Server Actions
+
+**For Safe Actions, authentication, and server-side logic:**
+
+- "Build user registration endpoint"
+- "Add RSVP response validation"
+- "Create invitation sharing API"
+- **Approach**: Use universal development principles with Next-Safe-Action patterns
+- **Review with**: @code-reviewer for type safety and security validation
+
+#### ⚛️ Frontend & Components
+
+**For React components, UI, and client-side interactions:**
+
+- "Create invitation editor interface"
+- "Build mobile-responsive dashboard"
+- "Add block-based editor controls"
+- **Approach**: Follow shadcn/ui patterns and mobile-first design
+- **Review with**: @code-reviewer for performance and accessibility
+
+#### 🗄️ Database & State Management
+
+**For Supabase operations and data handling:**
+
+- "Optimize invitation queries"
+- "Add RLS policies for security"
+- "Create real-time subscriptions"
+- **Approach**: Use Supabase best practices with TypeScript safety
+- **Review with**: @code-reviewer for query optimization and security
+
+#### 🎨 Mobile UI & Korean UX
+
+**For responsive design and localization:**
+
+- "Improve touch interactions"
+- "Add Korean input handling"
+- "Optimize mobile performance"
+- **Approach**: Touch-friendly design with Korean cultural considerations
+- **Review with**: @code-reviewer for accessibility and UX patterns
+
+#### 🔍 Quality Assurance
+
+**For comprehensive code review:**
+
+- "Review my invitation editor changes"
+- "Audit authentication security"
+- "Check mobile performance optimizations"
+- **Direct to**: @code-reviewer for thorough analysis
+
+### How to Use Your Current Team
+
+#### For New Feature Development
+
+1. **Start**: Describe your feature goal clearly
+2. **Develop**: Build using project conventions in CLAUDE.md
+3. **Review**: Call @code-reviewer with: "Review my [feature] implementation"
+4. **Iterate**: Apply feedback and commit with proper messages
+
+#### For Code Quality Improvements
+
+1. **Target**: "Review authentication flow for security issues"
+2. **Scope**: "Audit invitation sharing for performance bottlenecks"
+3. **Standards**: "Check compliance with Next.js 15 and TypeScript best practices"
+
+#### For Bug Fixes
+
+1. **Analyze**: Describe the issue and attempted solutions
+2. **Fix**: Implement solution following project patterns
+3. **Validate**: Have @code-reviewer verify the fix doesn't introduce new issues
+
+### Specialized Knowledge Areas
+
+#### Next-Safe-Action Expertise
+
+- Type-safe server action patterns
+- Validation schema design with Zod
+- Authentication middleware implementation
+- Korean error message handling
+
+#### Mobile Wedding Platform Domain
+
+- Touch-friendly block editor interfaces
+- Korean cultural wedding traditions
+- RSVP and guest management workflows
+- Template-based design systems
+
+#### Supabase Integration
+
+- Row Level Security (RLS) policy design
+- Real-time subscription patterns
+- File upload and storage optimization
+- PostgreSQL query performance
+
+### Development Workflow with Current Team
+
+1. **Planning Phase**
+   - Reference CLAUDE.md sections 1-16 for constraints
+   - Use tasks.md for implementation sequence
+   - Follow Korean terminology (section 12)
+
+2. **Implementation Phase**
+   - Apply Server/Client component rules (section 8)
+   - Use Safe Action development checklist (section 9)
+   - Follow mobile-first responsive principles
+
+3. **Quality Assurance Phase**
+   - Run `npm run lint:fix && npm run type-check`
+   - Call @code-reviewer for expert analysis
+   - Apply feedback before committing
+
+4. **Commit Phase**
+   - Use Korean commit messages with [AI] tags
+   - Include AIDEV-NOTE comments for complex code
+   - Follow commit discipline (section 11)
+
+### Example Task Commands
+
+```bash
+# Feature Development
+"Build a mobile-optimized RSVP form with Korean validation messages"
+
+# Code Review  
+"@code-reviewer: Review my new invitation sharing component for security and performance"
+
+# Bug Fixing
+"Fix the Korean input handling issue in the contact block editor"
+
+# Performance Optimization
+"Optimize the template loading performance for mobile devices"
+```
+
+Your AI development team is configured for high-quality, culturally-aware mobile development with strong TypeScript safety and Korean user experience focus!
