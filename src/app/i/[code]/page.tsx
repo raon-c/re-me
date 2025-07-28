@@ -6,9 +6,9 @@ import { InvitationViewer } from '@/components/invitation/InvitationViewer';
 // AIDEV-NOTE: 공개 청첩장 조회 페이지 - 고유 코드로 청첩장 조회
 
 interface PublicInvitationPageProps {
-  params: {
+  params: Promise<{
     code: string;
-  };
+  }>;
 }
 
 // AIDEV-NOTE: SEO 최적화를 위한 동적 메타데이터 생성
@@ -16,11 +16,12 @@ export async function generateMetadata({
   params,
 }: PublicInvitationPageProps): Promise<Metadata> {
   try {
+    const { code } = await params;
     const supabase = await createClient();
     const { data: invitation } = await supabase
       .from('invitations')
       .select('*')
-      .eq('code', params.code)
+      .eq('code', code)
       .single();
 
     if (!invitation) {
@@ -38,7 +39,7 @@ export async function generateMetadata({
 
     const title = `${invitation.groomName} ❤️ ${invitation.brideName} 결혼식 청첩장`;
     const description = `${weddingDateStr} ${invitation.venueName}에서 거행되는 ${invitation.groomName}과 ${invitation.brideName}의 결혼식에 초대합니다.`;
-    const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://re-me.vercel.app'}/i/${params.code}`;
+    const invitationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://re-me.vercel.app'}/i/${code}`;
 
     return {
       title,
@@ -86,11 +87,12 @@ export default async function PublicInvitationPage({
 }: PublicInvitationPageProps) {
   try {
     // AIDEV-NOTE: 서버 컴포넌트에서 청첩장 데이터 조회 및 조회 로그 기록
+    const { code } = await params;
     const supabase = await createClient();
     const { data: invitation } = await supabase
       .from('invitations')
       .select('*')
-      .eq('code', params.code)
+      .eq('code', code)
       .single();
 
     if (!invitation) {

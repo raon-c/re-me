@@ -7,6 +7,8 @@ import { EditorToolbar } from './EditorToolbar';
 import { EditorSidebar } from './EditorSidebar';
 import { EditorCanvas } from './EditorCanvas';
 import { EditorStatusBar } from './EditorStatusBar';
+import { EditorTopInfo } from './EditorTopInfo';
+import { EditorRightPanel } from './EditorRightPanel';
 import { toast } from 'sonner';
 import type { Block, BlockType } from '@/types/blocks';
 
@@ -30,13 +32,14 @@ export function BlockEditor({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date>();
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
 
   const {
     blocks,
     addBlock,
     removeBlock,
     updateBlock,
-    toggleEdit,
     duplicateBlock,
     moveBlockUp,
     moveBlockDown,
@@ -76,7 +79,8 @@ export function BlockEditor({
   };
 
   const handleBlockEdit = (blockId: string) => {
-    toggleEdit(blockId);
+    setSelectedBlockId(blockId);
+    setIsRightPanelOpen(true);
   };
 
   const handleBlockDelete = (blockId: string) => {
@@ -102,11 +106,27 @@ export function BlockEditor({
   };
 
   const handleBlockSettings = (blockId: string) => {
-    console.log('블록 설정:', blockId);
+    setSelectedBlockId(blockId);
+    setIsRightPanelOpen(true);
   };
 
+  const handleRightPanelClose = () => {
+    setIsRightPanelOpen(false);
+    setSelectedBlockId(null);
+  };
+
+  const handleRightPanelSave = () => {
+    setIsRightPanelOpen(false);
+    setSelectedBlockId(null);
+    toast.success('블록이 수정되었습니다.');
+  };
+
+  const selectedBlock = selectedBlockId
+    ? blocks.find((b) => b.id === selectedBlockId) || null
+    : null;
+
   const handleBlockToggleVisibility = (blockId: string) => {
-    const block = blocks.find(b => b.id === blockId);
+    const block = blocks.find((b) => b.id === blockId);
     if (block) {
       updateBlock(blockId, { isVisible: !block.isVisible });
     }
@@ -124,6 +144,17 @@ export function BlockEditor({
         onPreviewToggle={(isPreview) => onPreviewToggle?.(isPreview)}
         onSave={handleSave}
       />
+
+      {/* 상단 정보 표시 */}
+      {!isPreviewMode && (
+        <div className="px-4">
+          <EditorTopInfo
+            selectedBlock={selectedBlock}
+            totalBlocks={blocks.length}
+            isPreviewMode={isPreviewMode}
+          />
+        </div>
+      )}
 
       {/* 메인 편집 영역 */}
       <div className="flex-1 flex overflow-hidden">
@@ -150,6 +181,15 @@ export function BlockEditor({
           onBlockDuplicate={handleBlockDuplicate}
           onBlockMove={handleBlockMove}
           onBlockSettings={handleBlockSettings}
+        />
+
+        {/* 우측 편집 패널 */}
+        <EditorRightPanel
+          selectedBlock={selectedBlock}
+          isOpen={isRightPanelOpen}
+          onClose={handleRightPanelClose}
+          onBlockUpdate={handleBlockUpdate}
+          onSave={handleRightPanelSave}
         />
       </div>
 

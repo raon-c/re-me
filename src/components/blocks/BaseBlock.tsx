@@ -5,14 +5,7 @@ import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import type { Block, BlockStyles } from '@/types/blocks';
 import { Button } from '@/components/ui/button';
-import {
-  Trash2,
-  Edit3,
-  Copy,
-  ArrowUp,
-  ArrowDown,
-  Settings,
-} from 'lucide-react';
+import { Trash2, ArrowUp, ArrowDown, Edit3 } from 'lucide-react';
 
 interface BaseBlockProps {
   block: Block;
@@ -21,29 +14,27 @@ interface BaseBlockProps {
   isPreview?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
-  onDuplicate?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
-  onSettings?: () => void;
   className?: string;
 }
 
 // AIDEV-NOTE: 블록 스타일을 CSS 클래스로 변환
 function getBlockStyles(styles?: BlockStyles): string {
   if (!styles) return '';
-  
+
   const classes = [];
-  
+
   // 텍스트 색상
   if (styles.textColor) {
     classes.push(`text-[${styles.textColor}]`);
   }
-  
+
   // 배경 색상
   if (styles.backgroundColor) {
     classes.push(`bg-[${styles.backgroundColor}]`);
   }
-  
+
   // 폰트 크기
   switch (styles.fontSize) {
     case 'small':
@@ -55,12 +46,12 @@ function getBlockStyles(styles?: BlockStyles): string {
     default:
       classes.push('text-base');
   }
-  
+
   // 폰트 굵기
   if (styles.fontWeight === 'bold') {
     classes.push('font-bold');
   }
-  
+
   // 텍스트 정렬
   switch (styles.textAlign) {
     case 'left':
@@ -72,7 +63,7 @@ function getBlockStyles(styles?: BlockStyles): string {
     default:
       classes.push('text-center');
   }
-  
+
   // 패딩
   switch (styles.padding) {
     case 'small':
@@ -84,7 +75,7 @@ function getBlockStyles(styles?: BlockStyles): string {
     default:
       classes.push('p-4');
   }
-  
+
   // 마진
   switch (styles.margin) {
     case 'small':
@@ -96,7 +87,7 @@ function getBlockStyles(styles?: BlockStyles): string {
     default:
       classes.push('m-2');
   }
-  
+
   return classes.join(' ');
 }
 
@@ -107,17 +98,15 @@ export function BaseBlock({
   isPreview = false,
   onEdit,
   onDelete,
-  onDuplicate,
   onMoveUp,
   onMoveDown,
-  onSettings,
   className,
 }: BaseBlockProps) {
   const blockStyles = getBlockStyles(block.styles);
-  
+
   if (isPreview) {
     return (
-      <div 
+      <div
         className={cn(
           'relative transition-all duration-200',
           blockStyles,
@@ -148,13 +137,13 @@ export function BaseBlock({
 
           {/* 툴바 컨테이너 */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="flex flex-wrap gap-1 sm:gap-2 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5 sm:p-2 pointer-events-auto max-w-xs">
+            <div className="flex gap-1 sm:gap-2 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5 sm:p-2 pointer-events-auto">
               {onEdit && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onEdit}
-                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-blue-100"
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-100"
                   title="편집"
                 >
                   <Edit3 className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -185,28 +174,6 @@ export function BaseBlock({
                     </Button>
                   )}
                 </div>
-              )}
-              {onDuplicate && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onDuplicate}
-                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-green-100"
-                  title="복제"
-                >
-                  <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
-                </Button>
-              )}
-              {onSettings && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onSettings}
-                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-purple-100"
-                  title="설정"
-                >
-                  <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
-                </Button>
               )}
               {onDelete && (
                 <Button
