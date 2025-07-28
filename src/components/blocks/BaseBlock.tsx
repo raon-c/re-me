@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import type { Block, BlockStyles } from '@/types/blocks';
 import { Button } from '@/components/ui/button';
-import { Trash2, Edit3, Copy, ArrowUp, ArrowDown, Settings } from 'lucide-react';
+import { Trash2, Edit3, Copy, ArrowUp, ArrowDown, Settings, Check, X } from 'lucide-react';
 
 interface BaseBlockProps {
   block: Block;
@@ -125,92 +125,128 @@ export function BaseBlock({
   return (
     <div 
       className={cn(
-        'relative group transition-all duration-200 w-full',
-        'border-2 border-transparent hover:border-blue-200',
-        isEditing && 'border-blue-400 bg-blue-50',
+        'relative group transition-all duration-200 w-full overflow-hidden',
+        'border-2 border-transparent rounded-lg',
+        !isEditing && 'hover:border-blue-200',
+        isEditing && 'border-blue-400 bg-blue-50 shadow-sm',
         blockStyles,
         className
       )}
     >
-      {/* AIDEV-NOTE: 블록 편집 툴바 - 세로 레이아웃에 맞게 조정 */}
-      {!isPreview && (
-        <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <div className="flex gap-1 bg-white border border-gray-200 rounded-md shadow-sm p-1">
-            {onEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onEdit}
-                className="h-6 w-6 p-0"
-                title="편집"
-              >
-                <Edit3 className="h-3 w-3" />
-              </Button>
-            )}
-            {onMoveUp && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onMoveUp}
-                className="h-6 w-6 p-0"
-                title="위로 이동"
-              >
-                <ArrowUp className="h-3 w-3" />
-              </Button>
-            )}
-            {onMoveDown && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onMoveDown}
-                className="h-6 w-6 p-0"
-                title="아래로 이동"
-              >
-                <ArrowDown className="h-3 w-3" />
-              </Button>
-            )}
-            {onDuplicate && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onDuplicate}
-                className="h-6 w-6 p-0"
-                title="복제"
-              >
-                <Copy className="h-3 w-3" />
-              </Button>
-            )}
-            {onSettings && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onSettings}
-                className="h-6 w-6 p-0"
-                title="설정"
-              >
-                <Settings className="h-3 w-3" />
-              </Button>
-            )}
-            {onDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onDelete}
-                className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                title="삭제"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
+      {/* AIDEV-NOTE: 블록 편집 툴바 오버레이 - 블록 내부를 덮는 형식 (편집 중이 아닐 때만) */}
+      {!isPreview && !isEditing && (
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none">
+          {/* 반투명 오버레이 배경 */}
+          <div className="absolute inset-0 bg-black bg-opacity-10 rounded-lg" />
+          
+          {/* 툴바 컨테이너 */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="flex flex-wrap gap-1 sm:gap-2 bg-white border border-gray-200 rounded-lg shadow-lg p-1.5 sm:p-2 pointer-events-auto max-w-xs">
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onEdit}
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-blue-100"
+                  title="편집"
+                >
+                  <Edit3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              )}
+              {(onMoveUp || onMoveDown) && (
+                <div className="flex">
+                  {onMoveUp && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onMoveUp}
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-gray-100 rounded-r-none"
+                      title="위로 이동"
+                    >
+                      <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                    </Button>
+                  )}
+                  {onMoveDown && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onMoveDown}
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-gray-100 rounded-l-none border-l"
+                      title="아래로 이동"
+                    >
+                      <ArrowDown className="h-3 w-3 sm:h-4 sm:w-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+              {onDuplicate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onDuplicate}
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-green-100"
+                  title="복제"
+                >
+                  <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              )}
+              {onSettings && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onSettings}
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-purple-100"
+                  title="설정"
+                >
+                  <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onDelete}
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
+                  title="삭제"
+                >
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* AIDEV-NOTE: 블록 타입 표시 (편집 모드일 때만) */}
+      {/* AIDEV-NOTE: 편집 모드 UI */}
       {isEditing && (
-        <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded z-10">
-          {block.type}
-        </div>
+        <>
+          {/* 블록 타입 표시 */}
+          <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded z-10">
+            {block.type} 편집 중
+          </div>
+          
+          {/* 편집 완료 버튼들 */}
+          <div className="absolute top-2 right-2 flex gap-1 z-10">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+              className="h-7 w-7 p-0 bg-green-500 hover:bg-green-600 text-white"
+              title="편집 완료"
+            >
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+              className="h-7 w-7 p-0 bg-gray-500 hover:bg-gray-600 text-white"
+              title="편집 취소"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </>
       )}
 
       {/* AIDEV-NOTE: 블록 내용 - 전체 너비 사용 */}
