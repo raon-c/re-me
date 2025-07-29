@@ -8,8 +8,7 @@ import { WeddingInfoRow } from '@/components/invitation/WeddingInfoRow';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getTemplateByIdAction } from '@/actions/safe-template-actions';
-import { createInvitationAction } from '@/actions/safe-invitation-actions';
-import { ArrowLeft, Save, Eye, ChevronRight, Info } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Template } from '@/types';
 import type { WeddingInfoFormData } from '@/lib/wedding-validations';
@@ -26,9 +25,7 @@ function CreateInvitationContent() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [currentStep, setCurrentStep] = useState<CreateStep>('wedding-info');
   const [weddingInfo, setWeddingInfo] = useState<WeddingInfoFormData | null>(null);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
 
   // 템플릿 정보 가져오기
@@ -72,27 +69,6 @@ function CreateInvitationContent() {
     router.push('/templates');
   };
 
-  // AIDEV-NOTE: camelCase에서 snake_case로 변환 (Safe Action 호환)
-  const convertWeddingInfoToSnakeCase = (data: WeddingInfoFormData) => {
-    return {
-      title: `${data.groomName} ❤ ${data.brideName}의 결혼식`,
-      groom_name: data.groomName,
-      bride_name: data.brideName,
-      wedding_date: data.weddingDate,
-      wedding_time: data.weddingTime,
-      venue_name: data.venueName,
-      venue_address: data.venueAddress,
-      template_id: templateId!,
-      custom_message: data.customMessage || '',
-      dress_code: data.dressCode || '',
-      parking_info: data.parkingInfo || '',
-      meal_info: data.mealInfo || '',
-      special_notes: data.specialNotes || '',
-      rsvp_enabled: data.rsvpEnabled,
-      rsvp_deadline: data.rsvpDeadline || '',
-      background_image_url: data.backgroundImageUrl || '',
-    };
-  };
 
   // 결혼식 정보 제출 핸들러
   const handleWeddingInfoSubmit = (data: WeddingInfoFormData) => {
@@ -101,31 +77,6 @@ function CreateInvitationContent() {
     toast.success('결혼식 정보가 입력되었습니다. 이제 청첩장을 꾸며보세요!');
   };
 
-  // 청첩장 저장 핸들러 
-  const handleSave = async () => {
-    if (!weddingInfo || !templateId) {
-      toast.error('결혼식 정보가 없습니다.');
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const invitationData = convertWeddingInfoToSnakeCase(weddingInfo);
-      const result = await createInvitationAction(invitationData);
-
-      if (result?.data) {
-        toast.success('청첩장이 성공적으로 생성되었습니다!');
-        router.push(`/dashboard`);
-      } else {
-        throw new Error(result?.serverError || '청첩장 생성에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('Failed to create invitation:', error);
-      toast.error('청첩장 생성 중 오류가 발생했습니다.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   // 이전 단계로 돌아가기
   const handlePrevStep = () => {
@@ -134,9 +85,6 @@ function CreateInvitationContent() {
     }
   };
 
-  const togglePreview = () => {
-    setIsPreviewMode(!isPreviewMode);
-  };
 
   if (!templateId) {
     return null; // 리다이렉트 처리 중
@@ -255,28 +203,6 @@ function CreateInvitationContent() {
                 </span>
               </div>
 
-              {currentStep === 'editing' && (
-                <div className="flex items-center gap-2 border-l pl-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={togglePreview}
-                    className="gap-2"
-                  >
-                    <Eye className="w-4 h-4" />
-                    {isPreviewMode ? '편집' : '미리보기'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    className="gap-2"
-                    disabled={isSaving}
-                  >
-                    <Save className="w-4 h-4" />
-                    {isSaving ? '저장 중...' : '청첩장 생성'}
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -318,7 +244,7 @@ function CreateInvitationContent() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>{isPreviewMode ? '미리보기' : '편집기'}</span>
+                  <span>편집기</span>
                   <span className="text-sm font-normal text-muted-foreground">
                     {selectedTemplate.name}
                   </span>
@@ -328,7 +254,6 @@ function CreateInvitationContent() {
                 <BlockBasedEditor
                   template={selectedTemplate}
                   weddingInfo={weddingInfo || undefined}
-                  isPreviewMode={isPreviewMode}
                 />
               </CardContent>
             </Card>
