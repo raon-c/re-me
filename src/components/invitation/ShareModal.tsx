@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 interface ShareModalProps {
+  isOpen?: boolean;
   invitationCode: string;
   groomName: string;
   brideName: string;
@@ -37,6 +38,7 @@ interface ShareOption {
 
 // AIDEV-NOTE: 모바일 친화적 공유 모달 - 한국 서비스 통합
 export function ShareModal({
+  isOpen = true,
   invitationCode,
   groomName,
   brideName,
@@ -190,7 +192,7 @@ export function ShareModal({
   ];
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle className="text-center">

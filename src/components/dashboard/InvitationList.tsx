@@ -182,10 +182,10 @@ export function InvitationList({ limit, showHeader = true }: InvitationListProps
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-lg line-clamp-1">
-                    {invitation.groomName} ♥ {invitation.brideName}
+                    {invitation.groom_name} ♥ {invitation.bride_name}
                   </CardTitle>
                   <p className="text-sm text-gray-500 mt-1">
-                    {invitation.weddingDate ? formatDate(invitation.weddingDate) : '날짜 미정'}
+                    {invitation.wedding_date ? formatDate(invitation.wedding_date) : '날짜 미정'}
                   </p>
                 </div>
                 <DropdownMenu>
@@ -201,14 +201,12 @@ export function InvitationList({ limit, showHeader = true }: InvitationListProps
                         편집
                       </Link>
                     </DropdownMenuItem>
-                    {invitation.status === 'published' && (
-                      <DropdownMenuItem asChild>
-                        <Link href={`/i/${invitation.invitationCode}`} target="_blank">
-                          <Eye className="h-4 w-4 mr-2" />
-                          미리보기
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem asChild>
+                      <Link href={`/i/${invitation.invitation_code}`} target="_blank">
+                        <Eye className="h-4 w-4 mr-2" />
+                        미리보기
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleDelete(invitation.id)}
                       className="text-red-600"
@@ -224,9 +222,9 @@ export function InvitationList({ limit, showHeader = true }: InvitationListProps
             <CardContent className="pt-0">
               {/* 청첩장 미리보기 이미지 */}
               <div className="aspect-[3/4] bg-gradient-to-br from-pink-50 to-blue-50 rounded-lg mb-4 overflow-hidden">
-                {invitation.thumbnailUrl ? (
+                {(invitation as any).thumbnail_url ? (
                   <Image
-                    src={invitation.thumbnailUrl}
+                    src={(invitation as any).thumbnail_url}
                     alt="청첩장 미리보기"
                     fill
                     className="object-cover"
@@ -241,9 +239,9 @@ export function InvitationList({ limit, showHeader = true }: InvitationListProps
               {/* 상태 및 통계 */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  {getStatusBadge(invitation.status)}
+                  {/* TODO: getStatusBadge(invitation.status) */}
                   <span className="text-xs text-gray-500">
-                    {invitation.createdAt ? new Date(invitation.createdAt).toLocaleDateString('ko-KR') : ''}
+                    {invitation.created_at ? new Date(invitation.created_at).toLocaleDateString('ko-KR') : ''}
                   </span>
                 </div>
 
@@ -259,7 +257,7 @@ export function InvitationList({ limit, showHeader = true }: InvitationListProps
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    <span>{invitation.weddingVenue || '장소 미정'}</span>
+                    <span>{invitation.venue_name || '장소 미정'}</span>
                   </div>
                 </div>
 
@@ -277,19 +275,17 @@ export function InvitationList({ limit, showHeader = true }: InvitationListProps
                     </Link>
                   </Button>
                   
-                  {invitation.status === 'published' && (
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                    >
-                      <Link href={`/i/${invitation.invitationCode}`} target="_blank">
-                        <Share2 className="h-3 w-3 mr-1" />
-                        공유
-                      </Link>
-                    </Button>
-                  )}
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <Link href={`/i/${invitation.invitation_code}`} target="_blank">
+                      <Share2 className="h-3 w-3 mr-1" />
+                      공유
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </CardContent>

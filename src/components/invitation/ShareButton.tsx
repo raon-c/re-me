@@ -44,7 +44,11 @@ export function ShareButton({
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={handleCloseShareModal}
-        invitation={invitation}
+        invitationCode={invitation.invitation_code}
+        groomName={invitation.groom_name}
+        brideName={invitation.bride_name}
+        weddingDate={invitation.wedding_date}
+        weddingVenue={invitation.venue_name}
       />
     </>
   );

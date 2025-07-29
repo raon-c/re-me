@@ -7,18 +7,21 @@ interface InvitationEditorProps {
   invitationId?: string;
   templateId?: string;
   className?: string;
+  onSave?: (data: any) => void | Promise<void>;
 }
 
 export function InvitationEditor({
   invitationId,
   templateId,
   className,
+  onSave,
 }: InvitationEditorProps) {
   return (
     <BlockBasedEditor
       invitationId={invitationId}
       templateId={templateId}
       className={className}
+      onSave={onSave}
     />
   );
 }

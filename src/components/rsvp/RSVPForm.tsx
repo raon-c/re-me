@@ -45,10 +45,10 @@ export function RSVPForm({ invitationId, groomName, brideName, onSuccess }: RSVP
     watch,
     setValue,
     formState: { errors },
-  } = useForm<RSVPFormData>({
+  } = useForm({
     resolver: zodResolver(rsvpSchema),
     defaultValues: {
-      attendanceStatus: 'attending',
+      attendanceStatus: 'attending' as const,
       adultCount: 1,
       childCount: 0,
     },
@@ -67,8 +67,8 @@ export function RSVPForm({ invitationId, groomName, brideName, onSuccess }: RSVP
         guestName: data.guestName,
         guestPhone: data.guestPhone || '',
         attendanceStatus: data.attendanceStatus,
-        adultCount: data.adultCount,
-        childCount: data.childCount,
+        adultCount: data.adultCount ?? 1,
+        childCount: data.childCount ?? 0,
         message: data.message || '',
       });
 
@@ -182,8 +182,8 @@ export function RSVPForm({ invitationId, groomName, brideName, onSuccess }: RSVP
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setValue('adultCount', Math.max(0, adultCount - 1))}
-                      disabled={adultCount <= 0}
+                      onClick={() => setValue('adultCount', Math.max(0, (adultCount ?? 1) - 1))}
+                      disabled={(adultCount ?? 1) <= 0}
                     >
                       -
                     </Button>
@@ -199,8 +199,8 @@ export function RSVPForm({ invitationId, groomName, brideName, onSuccess }: RSVP
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setValue('adultCount', Math.min(10, adultCount + 1))}
-                      disabled={adultCount >= 10}
+                      onClick={() => setValue('adultCount', Math.min(10, (adultCount ?? 1) + 1))}
+                      disabled={(adultCount ?? 1) >= 10}
                     >
                       +
                     </Button>
@@ -217,8 +217,8 @@ export function RSVPForm({ invitationId, groomName, brideName, onSuccess }: RSVP
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setValue('childCount', Math.max(0, childCount - 1))}
-                      disabled={childCount <= 0}
+                      onClick={() => setValue('childCount', Math.max(0, (childCount ?? 0) - 1))}
+                      disabled={(childCount ?? 0) <= 0}
                     >
                       -
                     </Button>
@@ -234,8 +234,8 @@ export function RSVPForm({ invitationId, groomName, brideName, onSuccess }: RSVP
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setValue('childCount', Math.min(10, childCount + 1))}
-                      disabled={childCount >= 10}
+                      onClick={() => setValue('childCount', Math.min(10, (childCount ?? 0) + 1))}
+                      disabled={(childCount ?? 0) >= 10}
                     >
                       +
                     </Button>

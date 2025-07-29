@@ -23,6 +23,7 @@ interface BlockBasedEditorProps {
   weddingInfo?: WeddingInfoFormData; // AIDEV-NOTE: 결혼식 정보를 블록에 전달
   isPreviewMode?: boolean;
   className?: string;
+  onSave?: (data: any) => void | Promise<void>;
 }
 
 export function BlockBasedEditor({
@@ -32,6 +33,7 @@ export function BlockBasedEditor({
   weddingInfo,
   isPreviewMode = false,
   className,
+  onSave,
 }: BlockBasedEditorProps) {
   const [internalPreviewMode, setInternalPreviewMode] = useState(false);
   const currentPreviewMode = isPreviewMode ?? internalPreviewMode;

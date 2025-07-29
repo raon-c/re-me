@@ -8,12 +8,12 @@ import type { ShareData } from '@/types';
 export default function ShareDemoPage() {
   const sampleInvitation: ShareData = {
     id: 'demo-1',
-    invitationCode: 'DEMO1234',
-    groomName: '김철수',
-    brideName: '이영희',
-    weddingDate: '2024년 6월 15일',
-    weddingTime: '오후 2시',
-    venueName: '서울웨딩홀',
+    invitation_code: 'DEMO1234',
+    groom_name: '김철수',
+    bride_name: '이영희',
+    wedding_date: '2024년 6월 15일',
+    wedding_time: '오후 2시',
+    venue_name: '서울웨딩홀',
   };
 
   return (
@@ -31,12 +31,12 @@ export default function ShareDemoPage() {
           <CardContent className="space-y-4">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-semibold">
-                {sampleInvitation.groomName} ❤️ {sampleInvitation.brideName}
+                {sampleInvitation.groom_name} ❤️ {sampleInvitation.bride_name}
               </h2>
               <p className="text-lg text-gray-600">
-                {sampleInvitation.weddingDate} {sampleInvitation.weddingTime}
+                {sampleInvitation.wedding_date} {sampleInvitation.wedding_time}
               </p>
-              <p className="text-gray-600">{sampleInvitation.venueName}</p>
+              <p className="text-gray-600">{sampleInvitation.venue_name}</p>
             </div>
 
             <div className="flex justify-center pt-4">

@@ -14,8 +14,10 @@ interface BaseBlockProps {
   isPreview?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  onSettings?: () => void;
   className?: string;
 }
 
@@ -100,6 +102,7 @@ export function BaseBlock({
   onDelete,
   onMoveUp,
   onMoveDown,
+
   className,
 }: BaseBlockProps) {
   const blockStyles = getBlockStyles(block.styles);
